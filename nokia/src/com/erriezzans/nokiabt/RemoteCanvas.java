@@ -65,7 +65,7 @@ final class RemoteCanvas extends Canvas {
     }
     private void drawGamepad(Graphics g,int w,int h,int top,int foot){
         int usable=h-top-foot,cx=w/2,cy=top+usable/2+2;
-        int d=Math.min(usable/4,w/3);
+        int d=Math.min(usable/5,w/3);
         int x=w/4,y=cy,bx=w*3/4,by=cy;
         g.setColor(255,255,255);g.setFont(Font.getFont(Font.FACE_SYSTEM,Font.STYLE_BOLD,Font.SIZE_MEDIUM));
         g.drawString("PLAYSTATION GAMEPAD",cx,top+3,Graphics.TOP|Graphics.HCENTER);
