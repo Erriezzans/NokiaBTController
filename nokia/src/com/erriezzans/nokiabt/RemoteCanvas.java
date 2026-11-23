@@ -64,39 +64,51 @@ final class RemoteCanvas extends Canvas {
         g.drawString("* Mouse toggle  |  Send text in Menu",cx,y+42,Graphics.BOTTOM|Graphics.HCENTER);
     }
     private void drawGamepad(Graphics g,int w,int h,int top,int foot){
-        int usable=h-top-foot,cx=w/2,cy=top+usable/2;
-        int d=Math.min(usable/3,w/3);
-        int x=w/4,y=cy;
+        int usable=h-top-foot,cx=w/2,cy=top+usable/2+2;
+        int d=Math.min(usable/4,w/3);
+        int x=w/4,y=cy,bx=w*3/4,by=cy;
         g.setColor(255,255,255);g.setFont(Font.getFont(Font.FACE_SYSTEM,Font.STYLE_BOLD,Font.SIZE_MEDIUM));
-        g.drawString("PLAYSTATION GAMEPAD",cx,top+4,Graphics.TOP|Graphics.HCENTER);
+        g.drawString("PLAYSTATION GAMEPAD",cx,top+3,Graphics.TOP|Graphics.HCENTER);
+        g.setColor(52,70,96);
+        // Shoulder and trigger buttons are visible across the top.
+        g.fillRoundRect(7,top+23,49,19,8,8);g.fillRoundRect(61,top+23,49,19,8,8);
+        g.fillRoundRect(w-110,top+23,49,19,8,8);g.fillRoundRect(w-56,top+23,49,19,8,8);
+        g.setColor(245,248,255);g.setFont(Font.getFont(Font.FACE_SYSTEM,Font.STYLE_BOLD,Font.SIZE_SMALL));
+        g.drawString("L2 (*)",31,top+27,Graphics.TOP|Graphics.HCENTER);
+        g.drawString("L1 (7)",85,top+27,Graphics.TOP|Graphics.HCENTER);
+        g.drawString("R1 (9)",w-85,top+27,Graphics.TOP|Graphics.HCENTER);
+        g.drawString("R2 (#)",w-31,top+27,Graphics.TOP|Graphics.HCENTER);
+        // D-pad.
         g.setColor(44,59,82);
         g.fillRoundRect(x-d/2,y-d/2,d,d,8,8);
         g.fillRoundRect(x-d/3,y-d*3/2,d*2/3,d,8,8);
         g.fillRoundRect(x-d/3,y+d/2,d*2/3,d,8,8);
         g.fillRoundRect(x-d*3/2,y-d/3,d,d*2/3,8,8);
         g.fillRoundRect(x+d/2,y-d/3,d,d*2/3,8,8);
+        // Four face buttons.
+        g.fillRoundRect(bx-11,by-d,26,26,13,13);
+        g.fillRoundRect(bx-d/2-11,by-13,26,26,13,13);
+        g.fillRoundRect(bx+d/2-11,by-13,26,26,13,13);
+        g.fillRoundRect(bx-11,by+d/2,26,26,13,13);
+        // L3/R3 stick-click buttons and Select/Start.
+        g.fillRoundRect(x-20,y+d*3/2+4,40,18,8,8);
+        g.fillRoundRect(bx-20,by+d*3/2+4,40,18,8,8);
+        g.fillRoundRect(cx-47,h-foot-24,42,18,8,8);
+        g.fillRoundRect(cx+5,h-foot-24,42,18,8,8);
         g.setColor(245,248,255);
         g.drawString("^",x,y-d*3/2+8,Graphics.TOP|Graphics.HCENTER);
         g.drawString("v",x,y+d/2+8,Graphics.TOP|Graphics.HCENTER);
         g.drawString("<",x-d*3/2+8,y-5,Graphics.TOP|Graphics.HCENTER);
         g.drawString(">",x+d/2+8,y-5,Graphics.TOP|Graphics.HCENTER);
-        int bx=w*3/4,by=y;
-        g.setColor(44,59,82);
-        g.fillRoundRect(bx-12,by-d,28,28,14,14);
-        g.fillRoundRect(bx-d/2-12,by-14,28,28,14,14);
-        g.fillRoundRect(bx+d/2-12,by-14,28,28,14,14);
-        g.fillRoundRect(bx-12,by+d/2,28,28,14,14);
-        g.setColor(245,248,255);
-        g.drawString("△",bx+2,by-d+5,Graphics.TOP|Graphics.HCENTER);
+        g.drawString("△",bx+2,by-d+4,Graphics.TOP|Graphics.HCENTER);
         g.drawString("□",bx-d/2+2,by-9,Graphics.TOP|Graphics.HCENTER);
         g.drawString("○",bx+d/2+2,by-9,Graphics.TOP|Graphics.HCENTER);
-        g.drawString("×",bx+2,by+d/2+5,Graphics.TOP|Graphics.HCENTER);
-        g.setColor(170,190,215);g.setFont(Font.getFont(Font.FACE_SYSTEM,Font.STYLE_PLAIN,Font.SIZE_SMALL));
-        int base=h-foot-55;
-        g.drawString("1 □  2 △  3 ○  4 ×",cx,base,Graphics.BOTTOM|Graphics.HCENTER);
-        g.drawString("7 L1  9 R1  * L2  # R2",cx,base+14,Graphics.BOTTOM|Graphics.HCENTER);
-        g.drawString("6 L3  8 R3  5 Select  0 Start",cx,base+28,Graphics.BOTTOM|Graphics.HCENTER);
-        g.drawString("D-pad: D-pad + left stick",cx,base+42,Graphics.BOTTOM|Graphics.HCENTER);
+        g.drawString("×",bx+2,by+d/2+4,Graphics.TOP|Graphics.HCENTER);
+        g.setFont(Font.getFont(Font.FACE_SYSTEM,Font.STYLE_PLAIN,Font.SIZE_SMALL));
+        g.drawString("L3 (6)",x,y+d*3/2+6,Graphics.TOP|Graphics.HCENTER);
+        g.drawString("R3 (8)",bx,by+d*3/2+6,Graphics.TOP|Graphics.HCENTER);
+        g.drawString("SELECT (5)",cx-26,h-foot-21,Graphics.TOP|Graphics.HCENTER);
+        g.drawString("START (0)",cx+26,h-foot-21,Graphics.TOP|Graphics.HCENTER);
     }
     protected void keyPressed(int keyCode){
         int a=getGameAction(keyCode);char c=keyChar(keyCode);
