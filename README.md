@@ -12,11 +12,13 @@ A two-part Bluetooth controller project for a **Nokia C5-00 (240×320, Java ME)*
 - Native Android virtual keyboard and mouse are separate devices from the gamepad.
 - Disconnect cleanup releases held keys/buttons and destroys the uinput devices.
 
-## Important: source code, not prebuilt installation files
+## Build outputs
 
-The current build environment has Java 21 but **does not have the Android SDK/NDK, Gradle, or a Java ME/CLDC preverifier**. Therefore this package contains the implementation and build project, but does not claim to contain a tested APK or a runnable C5-00 JAR. The C5-00 JAR needs a Java ME toolchain with MIDP 2.1, CLDC 1.1 and JSR-82 libraries plus the CLDC preverifier. The Android APK needs Android SDK 35, NDK and CMake 3.22.1.
+The Nokia Java ME MIDlet is built by GitHub Actions using Eclipse ECJ, CLDC/MIDP/JSR-82 API libraries, and ProGuard CLDC preverification. The latest successful run produces `NokiaBTController-1.0.0.jar` and `NokiaBTController-1.0.0.jad` as the `NokiaBTController-JavaME-1.0.0` workflow artifact. Download both files together from the workflow run: https://github.com/Erriezzans/NokiaBTController/actions/runs/45196452711
 
-The files must still be built and tested on the actual Nokia C5-00 and target Android hardware. Bluetooth pairing, kernel uinput availability, root authorization and SELinux policy differ between Android builds.
+The generated JAR contains the three MIDlet classes, uses Java 1.1 class-file bytecode (major version 45), and its JAD descriptor has the matching JAR byte size. It has not yet been installed or tested on a physical Nokia C5-00. The Android APK is not built by this Java ME workflow and still requires Android SDK 35, NDK and CMake 3.22.1.
+
+Bluetooth pairing, actual C5-00 JSR-82 behavior, Android kernel uinput availability, root authorization and SELinux policy still require device testing.
 
 ## Build Android receiver
 
