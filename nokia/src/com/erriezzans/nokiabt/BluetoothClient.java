@@ -255,13 +255,13 @@ final class BluetoothClient implements DiscoveryListener {
             if(activeSearch!=-1&&id!=activeSearch)return;
             serviceDone=true;
             if(serviceUrl==null){
-                if(response==ServiceSearchResponse.SERVICE_SEARCH_NO_RECORDS)
+                if(response==4)
                     serviceFailure="No matching RFCOMM service record was advertised by Android.";
-                else if(response==ServiceSearchResponse.SERVICE_SEARCH_DEVICE_NOT_REACHABLE)
+                else if(response==6)
                     serviceFailure="Android is not reachable. Keep it nearby and check Bluetooth is on.";
-                else if(response==ServiceSearchResponse.SERVICE_SEARCH_ERROR)
+                else if(response==3)
                     serviceFailure="Bluetooth service discovery failed. Pair the devices and retry.";
-                else if(response==ServiceSearchResponse.SERVICE_SEARCH_TERMINATED)
+                else if(response==2)
                     serviceFailure="Bluetooth service discovery was cancelled.";
             }
             lock.notifyAll();
