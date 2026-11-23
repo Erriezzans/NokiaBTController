@@ -110,7 +110,7 @@ public final class BluetoothReceiverService extends Service {
             inputBridge.start(this);
             publish("Connected. Starting virtual keyboard, mouse and gamepad...");
             DataInputStream input = new DataInputStream(socket.getInputStream());
-            while (running && !socket.isClosed()) {
+            while (running && socket.isConnected()) {
                 Protocol.Frame frame = Protocol.read(input);
                 if (frame == null) break;
                 if (frame.type == Protocol.MODE) {
