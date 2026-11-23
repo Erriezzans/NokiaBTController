@@ -16,7 +16,8 @@ final class BluetoothClient implements DiscoveryListener {
     private DiscoveryAgent agent;
     private StreamConnection connection;
     private DataOutputStream output;
-    private boolean inquiryDone,serviceDone,connected,scanning,connecting;
+    private boolean inquiryDone,serviceDone,connected;
+    private volatile boolean scanning,connecting;
     private String serviceUrl;
     private int activeSearch=-1;
 
@@ -55,7 +56,7 @@ final class BluetoothClient implements DiscoveryListener {
                 synchronized(BluetoothClient.this){scanning=false;}
             }
 
-            if(isConnecting())return;
+            if(supersededByConnect||isConnecting())return;
             Vector copy=copyDevices();
             if(failure!=null){
                 app.updateDeviceBrowser(copy,DeviceBrowserCanvas.ERROR,
@@ -67,7 +68,7 @@ final class BluetoothClient implements DiscoveryListener {
                 app.updateDeviceBrowser(copy,DeviceBrowserCanvas.READY,
                         copy.size()+" device(s) found. Select the Android receiver and press Connect.");
             }
-        }},"nokia-bt-discovery").start();
+        }}).start();
     }
 
     private boolean isConnecting(){synchronized(this){return connecting;}}
@@ -163,7 +164,7 @@ final class BluetoothClient implements DiscoveryListener {
             }finally{
                 synchronized(BluetoothClient.this){connecting=false;}
             }
-        }},"nokia-bt-connect").start();
+        }}).start();
     }
 
     public void deviceDiscovered(RemoteDevice device,DeviceClass deviceClass){addDevice(device);}
