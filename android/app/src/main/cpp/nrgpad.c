@@ -20,6 +20,7 @@
 #define PKT_PAD_AXIS 6
 #define PKT_RESET 7
 #define PKT_MODE 8
+#define PKT_TEXT 9
 
 #define PAD_CROSS 0
 #define PAD_CIRCLE 1
@@ -146,10 +147,22 @@ static int create_device(int fd, const char *name, int vendor, int product,
 
 static int setup_keyboard(void) {
     static const unsigned short keys[] = {
+        KEY_A,KEY_B,KEY_C,KEY_D,KEY_E,KEY_F,KEY_G,KEY_H,KEY_I,KEY_J,KEY_K,KEY_L,KEY_M,
+        KEY_N,KEY_O,KEY_P,KEY_Q,KEY_R,KEY_S,KEY_T,KEY_U,KEY_V,KEY_W,KEY_X,KEY_Y,KEY_Z,
+        KEY_0,KEY_1,KEY_2,KEY_3,KEY_4,KEY_5,KEY_6,KEY_7,KEY_8,KEY_9,
+        KEY_SPACE,KEY_BACKSPACE,KEY_LEFTSHIFT,KEY_MINUS,KEY_EQUAL,KEY_COMMA,KEY_DOT,
+        KEY_SLASH,KEY_SEMICOLON,KEY_APOSTROPHE,KEY_LEFTBRACE,KEY_RIGHTBRACE,KEY_BACKSLASH,
+        KEY_ESC,KEY_ENTER,KEY_HOME,KEY_UP,KEY_DOWN,KEY_LEFT,KEY_RIGHT,
+        KEY_VOLUMEDOWN,KEY_VOLUMEUP,KEY_PLAYPAUSE,KEY_BACK,KEY_MENU,
+        KEY_PAGEUP,KEY_PAGEDOWN
+    };
+    /* Original TV remote keys are included above. */
+    /*
         KEY_ESC, KEY_ENTER, KEY_HOME, KEY_UP, KEY_DOWN, KEY_LEFT, KEY_RIGHT,
         KEY_VOLUMEDOWN, KEY_VOLUMEUP, KEY_PLAYPAUSE, KEY_BACK, KEY_MENU,
         KEY_PAGEUP, KEY_PAGEDOWN
     };
+    */
     keyboard_fd = open_uinput();
     if (keyboard_fd < 0) return -1;
     if (create_device(keyboard_fd, "Nokia Bluetooth Remote", 0x0001, 0x1001,
@@ -229,6 +242,42 @@ static void reset_inputs(void) {
     }
 }
 
+static void emit_text_char(int ch) {
+    int key = 0, shift = 0;
+    if (ch >= 'a' && ch <= 'z') key = KEY_A + (ch - 'a');
+    else if (ch >= 'A' && ch <= 'Z') { key = KEY_A + (ch - 'A'); shift = 1; }
+    else if (ch >= '1' && ch <= '9') key = KEY_1 + (ch - '1');
+    else if (ch == '0') key = KEY_0;
+    else if (ch == ' ') key = KEY_SPACE;
+    else if (ch == '-') key = KEY_MINUS;
+    else if (ch == '_') { key = KEY_MINUS; shift = 1; }
+    else if (ch == '=') key = KEY_EQUAL;
+    else if (ch == '+') { key = KEY_EQUAL; shift = 1; }
+    else if (ch == ',') key = KEY_COMMA;
+    else if (ch == '<') { key = KEY_COMMA; shift = 1; }
+    else if (ch == '.') key = KEY_DOT;
+    else if (ch == '>') { key = KEY_DOT; shift = 1; }
+    else if (ch == '/') key = KEY_SLASH;
+    else if (ch == '?') { key = KEY_SLASH; shift = 1; }
+    else if (ch == ';') key = KEY_SEMICOLON;
+    else if (ch == ':') { key = KEY_SEMICOLON; shift = 1; }
+    else if (ch == '\\'') key = KEY_APOSTROPHE;
+    else if (ch == '"') { key = KEY_APOSTROPHE; shift = 1; }
+    else if (ch == '[') key = KEY_LEFTBRACE;
+    else if (ch == '{') { key = KEY_LEFTBRACE; shift = 1; }
+    else if (ch == ']') key = KEY_RIGHTBRACE;
+    else if (ch == '}') { key = KEY_RIGHTBRACE; shift = 1; }
+    else if (ch == '\\\\') key = KEY_BACKSLASH;
+    else if (ch == '|') { key = KEY_BACKSLASH; shift = 1; }
+    else return;
+    if (shift) emit_event(keyboard_fd, EV_KEY, KEY_LEFTSHIFT, 1);
+    emit_event(keyboard_fd, EV_KEY, (unsigned short)key, 1);
+    emit_syn(keyboard_fd);
+    emit_event(keyboard_fd, EV_KEY, (unsigned short)key, 0);
+    if (shift) emit_event(keyboard_fd, EV_KEY, KEY_LEFTSHIFT, 0);
+    emit_syn(keyboard_fd);
+}
+
 static void handle_packet(const unsigned char *packet) {
     int type = packet[3];
     int code = (int16_t)(((unsigned int)packet[4] << 8) | packet[5]);
@@ -281,6 +330,9 @@ static void handle_packet(const unsigned char *packet) {
                 else if (code == 1) { axis_y = v; emit_event(gamepad_fd, EV_ABS, ABS_Y, axis_y); }
                 emit_syn(gamepad_fd);
             }
+            break;
+        case PKT_TEXT:
+            if (keyboard_fd >= 0 && code >= 0 && code <= 127) emit_text_char(code);
             break;
         case PKT_RESET:
             reset_inputs();
