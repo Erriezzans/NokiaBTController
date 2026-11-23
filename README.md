@@ -15,7 +15,7 @@ A two-part Bluetooth controller project for a **Nokia C5-00 (240×320, Java ME)*
 
 ## Build outputs
 
-The Nokia Java ME MIDlet is built by GitHub Actions using Eclipse ECJ, CLDC/MIDP/JSR-82 API libraries, and ProGuard CLDC preverification. The latest successful run produces `NokiaBTController-1.0.0.jar` and `NokiaBTController-1.0.0.jad` as the `NokiaBTController-JavaME-1.0.0` workflow artifact. Download the JAR and JAD from the latest successful build: https://github.com/Erriezzans/NokiaBTController/actions/runs/45207317113
+The Nokia Java ME MIDlet is built by GitHub Actions using Eclipse ECJ, CLDC/MIDP/JSR-82 API libraries, and ProGuard CLDC preverification. The latest successful run produces `NokiaBTController-1.0.0.jar` and `NokiaBTController-1.0.0.jad` as the `NokiaBTController-JavaME-1.0.0` workflow artifact. Download the JAR and JAD from the latest successful build: https://github.com/Erriezzans/NokiaBTController/actions/runs/45292864740
 
 The generated JAR contains the Bluetooth client, dedicated `DeviceBrowserCanvas`, responsive remote Canvas, persistent `KeyMap` and `KeyRemapForm` classes. It uses Java 1.1 class-file bytecode (major version 45); the JAD size is checked against the final JAR by the build script. The release JAR is 27,706 bytes and includes the separate device browser. It has not yet been installed or tested on a physical Nokia C5-00.
 
