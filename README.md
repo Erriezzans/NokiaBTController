@@ -8,7 +8,8 @@ A two-part Bluetooth controller project for a **Nokia C5-00 (240×320, Java ME)*
 - Android RFCOMM receiver with the same private Bluetooth service UUID.
 - TV remote mode: navigation, Select, Back, Home and volume keys.
 - Remote mouse ON/OFF: `*` toggles pointer mode; D-pad moves the pointer; center clicks.
-- Gamepad mode: native Android virtual gamepad created via `/dev/uinput`.
+- Gamepad mode: native Android virtual gamepad created via `/dev/uinput`, including D-pad, four face buttons, L1/R1, L2/R2, Select/Start and L3/R3.
+- Gamepad key remapping: the Nokia MIDlet has an Options → Key remap screen. The user can assign physical keys `0–9`, `*` and `#` to each gamepad function; duplicate assignments are rejected and valid mappings are saved in the phone's MIDP RecordStore.
 - Native Android virtual keyboard and mouse are separate devices from the gamepad.
 - Disconnect cleanup releases held keys/buttons and destroys the uinput devices.
 
@@ -16,7 +17,7 @@ A two-part Bluetooth controller project for a **Nokia C5-00 (240×320, Java ME)*
 
 The Nokia Java ME MIDlet is built by GitHub Actions using Eclipse ECJ, CLDC/MIDP/JSR-82 API libraries, and ProGuard CLDC preverification. The latest successful run produces `NokiaBTController-1.0.0.jar` and `NokiaBTController-1.0.0.jad` as the `NokiaBTController-JavaME-1.0.0` workflow artifact. Download both files together from the workflow run: https://github.com/Erriezzans/NokiaBTController/actions/runs/45196452711
 
-The generated JAR contains the three MIDlet classes, uses Java 1.1 class-file bytecode (major version 45), and its JAD descriptor has the matching JAR byte size. It has not yet been installed or tested on a physical Nokia C5-00. The Android APK is not built by this Java ME workflow and still requires Android SDK 35, NDK and CMake 3.22.1.
+The generated JAR contains the Bluetooth client, responsive Canvas, persistent `KeyMap` and `KeyRemapForm` classes. It uses Java 1.1 class-file bytecode (major version 45), and its JAD descriptor has the matching JAR byte size. The current build is attached to GitHub Actions run https://github.com/Erriezzans/NokiaBTController/actions/runs/45203696264. It has not yet been installed or tested on a physical Nokia C5-00. The Android APK is not built by this Java ME workflow and still requires Android SDK 35, NDK and CMake 3.22.1.
 
 Bluetooth pairing, actual C5-00 JSR-82 behavior, Android kernel uinput availability, root authorization and SELinux policy still require device testing.
 
@@ -43,7 +44,7 @@ Build with a Java ME SDK containing CLDC 1.1, MIDP 2.1, JSR-82 and the CLDC `pre
 3. Open Nokia BT Receiver and tap **Start Bluetooth receiver**.
 4. Approve the root-manager prompt. Native input devices require root and kernel uinput support.
 5. Install the MIDlet on the Nokia and choose **Connect**.
-6. Choose Remote or Gamepad from the MIDlet Options menu.
+6. Choose Remote or Gamepad from the MIDlet Options menu. Use Options → Key remap to customise gamepad keypad assignments; use Options → Send text to type into Android text fields.
 
 ## Nokia key mapping
 
