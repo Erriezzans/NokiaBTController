@@ -6,6 +6,8 @@ import javax.microedition.lcdui.CommandListener;
 import javax.microedition.lcdui.Display;
 import javax.microedition.lcdui.Displayable;
 import javax.microedition.lcdui.List;
+import javax.microedition.lcdui.TextBox;
+import javax.microedition.lcdui.TextField;
 import javax.microedition.midlet.MIDlet;
 import javax.bluetooth.RemoteDevice;
 
@@ -25,6 +27,9 @@ public final class NokiaBTController extends MIDlet implements CommandListener {
     private BluetoothClient bluetooth;
     private List deviceList;
     private Vector foundDevices;
+    private TextBox textBox;
+    private final Command sendTextCommand=new Command("Send",Command.OK,1);
+    private final Command cancelTextCommand=new Command("Cancel",Command.CANCEL,2);
     private final Command connectCommand=new Command("Find devices",Command.SCREEN,1);
     private final Command remoteCommand=new Command("Remote",Command.SCREEN,2);
     private final Command gamepadCommand=new Command("Gamepad",Command.SCREEN,3);
@@ -63,6 +68,11 @@ public final class NokiaBTController extends MIDlet implements CommandListener {
         deviceList.setCommandListener(this);
         display.setCurrent(deviceList);
     }
+    private void showTextEntry(){
+        textBox=new TextBox("Send text to Android","",160,TextField.ANY);
+        textBox.addCommand(sendTextCommand);textBox.addCommand(cancelTextCommand);textBox.setCommandListener(this);
+        display.setCurrent(textBox);
+    }
     void disconnectBluetooth(){if(bluetooth!=null)bluetooth.disconnect();canvas.setConnectionStatus("Disconnected");}
     boolean isConnected(){return bluetooth!=null&&bluetooth.isConnected();}
     void send(byte type,int code,int value){if(bluetooth!=null)bluetooth.send(type,code,value);}
@@ -73,7 +83,11 @@ public final class NokiaBTController extends MIDlet implements CommandListener {
         else if(command==remoteCommand)canvas.setMode(MODE_REMOTE);
         else if(command==gamepadCommand)canvas.setMode(MODE_GAMEPAD);
         else if(command==mouseCommand)canvas.toggleMouse();
-        else if(command==textCommand)canvas.openTextEntry();
+        else if(command==textCommand)showTextEntry();
+        else if(d==textBox){
+            if(command==sendTextCommand){String value=textBox.getString();for(int i=0;i<value.length();i++)send(PKT_TEXT,value.charAt(i),1);send(PKT_KEY,KEY_ENTER,1);send(PKT_KEY,KEY_ENTER,0);}
+            display.setCurrent(canvas);
+        }
         else if(command==disconnectCommand)disconnectBluetooth();
         else if(command==exitCommand)destroyApp(true);
     }
