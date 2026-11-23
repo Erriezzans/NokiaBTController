@@ -66,6 +66,11 @@ public final class NokiaBTController extends MIDlet implements CommandListener {
     void connectBluetooth(){openDeviceBrowser();}
 
     private void openDeviceBrowser(){
+        if(bluetooth.isConnected()){
+            canvas.setConnectionStatus("Already connected. Use Disconnect first.");
+            display.setCurrent(canvas);
+            return;
+        }
         if(deviceBrowser==null)deviceBrowser=new DeviceBrowserCanvas(this);
         display.setCurrent(deviceBrowser);
         deviceBrowser.setPageState(DeviceBrowserCanvas.SEARCHING,"Starting Bluetooth search...");
@@ -101,8 +106,13 @@ public final class NokiaBTController extends MIDlet implements CommandListener {
 
     void connectionFailed(final String message){
         display.callSerially(new Runnable(){public void run(){
-            if(deviceBrowser!=null)deviceBrowser.setPageState(DeviceBrowserCanvas.ERROR,message);
-            else canvas.setConnectionStatus("Connection failed: "+message);
+            if(deviceBrowser!=null){
+                deviceBrowser.setPageState(DeviceBrowserCanvas.ERROR,message);
+                display.setCurrent(deviceBrowser);
+            }else{
+                canvas.setConnectionStatus("Connection failed: "+message);
+                display.setCurrent(canvas);
+            }
         }});
     }
 
