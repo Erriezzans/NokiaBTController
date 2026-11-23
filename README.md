@@ -4,8 +4,8 @@ A two-part Bluetooth controller project for a **Nokia C5-00 (240×320, Java ME)*
 
 ## Features in this source snapshot
 
-- Nokia Java ME client using MIDP 2.1, CLDC 1.1 and JSR-82 Bluetooth service discovery.
-- Android RFCOMM receiver with the same private Bluetooth service UUID.
+- Nokia Java ME client using MIDP 2.1, CLDC 1.1 and JSR-82 Bluetooth service discovery. Device search opens a dedicated browser page with a live result list, selection, Connect, Scan again and Back actions.
+- Android RFCOMM receiver with the same private Bluetooth service UUID. Its setup screen includes a user-approved five-minute Bluetooth discoverability action for cases where Nokia inquiry cannot see the phone.
 - TV remote mode: navigation, Select, Back, Home and volume keys.
 - Remote mouse ON/OFF: `*` toggles pointer mode; D-pad moves the pointer; center clicks.
 - Gamepad mode: native Android virtual gamepad created via `/dev/uinput`, including D-pad, four face buttons, L1/R1, L2/R2, Select/Start and L3/R3.
@@ -17,7 +17,7 @@ A two-part Bluetooth controller project for a **Nokia C5-00 (240×320, Java ME)*
 
 The Nokia Java ME MIDlet is built by GitHub Actions using Eclipse ECJ, CLDC/MIDP/JSR-82 API libraries, and ProGuard CLDC preverification. The latest successful run produces `NokiaBTController-1.0.0.jar` and `NokiaBTController-1.0.0.jad` as the `NokiaBTController-JavaME-1.0.0` workflow artifact. Download both files together from the workflow run: https://github.com/Erriezzans/NokiaBTController/actions/runs/45196452711
 
-The generated JAR contains the Bluetooth client, responsive Canvas, persistent `KeyMap` and `KeyRemapForm` classes. It uses Java 1.1 class-file bytecode (major version 45), and its JAD descriptor has the matching JAR byte size. The current build is attached to GitHub Actions run https://github.com/Erriezzans/NokiaBTController/actions/runs/45203696264. It has not yet been installed or tested on a physical Nokia C5-00. The Android APK is not built by this Java ME workflow and still requires Android SDK 35, NDK and CMake 3.22.1.
+The generated JAR contains the Bluetooth client, dedicated `DeviceBrowserCanvas`, responsive remote Canvas, persistent `KeyMap` and `KeyRemapForm` classes. It uses Java 1.1 class-file bytecode (major version 45), and its JAD descriptor has the matching JAR byte size. The current build is attached to GitHub Actions run https://github.com/Erriezzans/NokiaBTController/actions/runs/45203696264. It has not yet been installed or tested on a physical Nokia C5-00. The Android APK is not built by this Java ME workflow and still requires Android SDK 35, NDK and CMake 3.22.1.
 
 Bluetooth pairing, actual C5-00 JSR-82 behavior, Android kernel uinput availability, root authorization and SELinux policy still require device testing.
 
@@ -93,3 +93,10 @@ See [docs/PROTOCOL.md](docs/PROTOCOL.md) and [docs/TESTING.md](docs/TESTING.md).
 - `6/8`: L3/R3; `5/0`: Select/Start.
 
 The 240x320 drawing uses the actual Canvas dimensions and scales its control spacing to keep the control groups within the screen. The physical keypad remains the input device; the graphics are a labelled key map, not touch controls.
+
+
+## Bluetooth discovery troubleshooting
+
+Android intentionally does not advertise itself as discoverable by default. In Nokia BT Receiver, use **Make discoverable (5 minutes)** and accept the Android system prompt, then return to the Nokia device browser and choose **Scan again**. You can also pair both devices in Android Bluetooth settings first; paired devices may appear in the Nokia browser even while discoverability is off.
+
+The Nokia search page stays open during scanning and while a connection is being attempted. It shows live discoveries, keeps the selected target visible, and reports a service/connection error on that same page so you can rescan or choose another device. The page uses the phone's physical D-pad and center key; its Connect, Scan again and Back actions are also available as softkey/menu commands.
