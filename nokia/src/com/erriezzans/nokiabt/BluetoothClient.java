@@ -32,6 +32,7 @@ final class BluetoothClient implements DiscoveryListener {
 
         new Thread(new Runnable(){public void run(){
             String failure=null;
+            boolean supersededByConnect=false;
             try{
                 LocalDevice local=LocalDevice.getLocalDevice();
                 agent=local.getDiscoveryAgent();
@@ -51,6 +52,7 @@ final class BluetoothClient implements DiscoveryListener {
                     }
                 }
                 try{agent.cancelInquiry(BluetoothClient.this);}catch(Exception ignored){}
+                supersededByConnect=isConnecting();
             }catch(Exception e){failure=message(e);}
             finally{
                 synchronized(BluetoothClient.this){scanning=false;}
@@ -157,6 +159,7 @@ final class BluetoothClient implements DiscoveryListener {
                 output=connection.openDataOutputStream();
                 synchronized(this){connected=true;}
                 send(NokiaBTController.PKT_MODE,NokiaBTController.MODE_REMOTE,0);
+                if(!isConnected())throw new IOException("Bluetooth output stream closed during setup.");
                 app.connectionSucceeded(name);
             }catch(Exception e){
                 closeConnection();
