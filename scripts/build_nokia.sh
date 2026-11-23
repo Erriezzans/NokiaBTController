@@ -44,6 +44,7 @@ test -x "$PROGUARD"
 
 rm -rf "$CLASSES_DIR"
 mkdir -p "$CLASSES_DIR" "$DIST_DIR"
+rm -f "$DIST_DIR/NokiaBTController-1.0.0.jar" "$DIST_DIR/NokiaBTController-1.0.0.jad"
 
 find "$ROOT_DIR/nokia/src" -name '*.java' -print | sort > "$BUILD_DIR/sources.txt"
 if [[ ! -s "$BUILD_DIR/sources.txt" ]]; then
@@ -59,11 +60,18 @@ java -jar "$ECJ_JAR" -nowarn \
   -classpath "$CLDC_JAR:$MIDP_JAR:$JSR82_JAR" \
   -d "$CLASSES_DIR" @"$BUILD_DIR/sources.txt"
 
-if ! find "$CLASSES_DIR" -type f -name '*.class' -print -quit | grep -q .; then
-  echo "ECJ completed but produced no .class files." >&2
-  cat "$BUILD_DIR/sources.txt" >&2
-  exit 1
-fi
+for required in \
+  "com/erriezzans/nokiabt/NokiaBTController.class" \
+  "com/erriezzans/nokiabt/RemoteCanvas.class" \
+  "com/erriezzans/nokiabt/BluetoothClient.class" \
+  "com/erriezzans/nokiabt/DeviceBrowserCanvas.class" \
+  "com/erriezzans/nokiabt/KeyMap.class" \
+  "com/erriezzans/nokiabt/KeyRemapForm.class"; do
+  if [[ ! -f "$CLASSES_DIR/$required" ]]; then
+    echo "Compilation did not produce required class: $required" >&2
+    exit 1
+  fi
+done
 
 echo "Creating intermediate class archive"
 jar cf "$BUILD_DIR/NokiaBTController-unverified.jar" -C "$CLASSES_DIR" .
@@ -112,68 +120,22 @@ fi
 rm -f "$PACKAGE_DIR/META-INF/MANIFEST.MF"
 jar cfm "$JAR_OUT" "$MANIFEST" -C "$PACKAGE_DIR" .
 
-if ! jar tf "$JAR_OUT" | grep -q '^com/erriezzans/nokiabt/NokiaBTController.class$'; then
-  echo "Final JAR is missing the MIDlet class." >&2
-  exit 1
-fi
-if ! jar tf "$JAR_OUT" | grep -q '^com/erriezzans/nokiabt/KeyRemapForm.class$'; then
-  echo "Final JAR is missing KeyRemapForm.class." >&2
-  exit 1
-fi
-if ! jar tf "$JAR_OUT" | grep -q '^com/erriezzans/nokiabt/KeyMap.class
-JAR_SIZE="$(wc -c < "$JAR_OUT" | tr -d '[:space:]')"
-cat > "$JAD_OUT" <<EOF
-MIDlet-Name: Nokia BT Controller
-MIDlet-Version: 1.0.0
-MIDlet-Vendor: Erriezzans
-MIDlet-1: Nokia BT Controller,,com.erriezzans.nokiabt.NokiaBTController
-MIDlet-Description: Bluetooth TV remote, mouse and gamepad for Android
-MicroEdition-Configuration: CLDC-1.1
-MicroEdition-Profile: MIDP-2.0
-MIDlet-Permissions: javax.microedition.io.Connector.bluetooth.client
-MIDlet-Jar-URL: NokiaBTController-1.0.0.jar
-MIDlet-Jar-Size: $JAR_SIZE
-EOF
+for required in \
+  "com/erriezzans/nokiabt/NokiaBTController.class" \
+  "com/erriezzans/nokiabt/RemoteCanvas.class" \
+  "com/erriezzans/nokiabt/BluetoothClient.class" \
+  "com/erriezzans/nokiabt/DeviceBrowserCanvas.class" \
+  "com/erriezzans/nokiabt/KeyMap.class" \
+  "com/erriezzans/nokiabt/KeyRemapForm.class"; do
+  if ! jar tf "$JAR_OUT" | grep -qx "$required"; then
+    echo "Final JAR is missing required class: $required" >&2
+    exit 1
+  fi
+done
 
-echo
-echo "Build complete:"
-ls -lh "$JAR_OUT" "$JAD_OUT"
-echo "JAR SHA-256:"
-sha256sum "$JAR_OUT"
-echo "JAR contents:"
-jar tf "$JAR_OUT"
-echo "Manifest:"
-unzip -p "$JAR_OUT" META-INF/MANIFEST.MF
-; then
-  echo "Final JAR is missing KeyMap.class." >&2
-  exit 1
-fi
-if ! jar tf "$JAR_OUT" | grep -q '^com/erriezzans/nokiabt/DeviceBrowserCanvas.class
-JAR_SIZE="$(wc -c < "$JAR_OUT" | tr -d '[:space:]')"
-cat > "$JAD_OUT" <<EOF
-MIDlet-Name: Nokia BT Controller
-MIDlet-Version: 1.0.0
-MIDlet-Vendor: Erriezzans
-MIDlet-1: Nokia BT Controller,,com.erriezzans.nokiabt.NokiaBTController
-MIDlet-Description: Bluetooth TV remote, mouse and gamepad for Android
-MicroEdition-Configuration: CLDC-1.1
-MicroEdition-Profile: MIDP-2.0
-MIDlet-Permissions: javax.microedition.io.Connector.bluetooth.client
-MIDlet-Jar-URL: NokiaBTController-1.0.0.jar
-MIDlet-Jar-Size: $JAR_SIZE
-EOF
-
-echo
-echo "Build complete:"
-ls -lh "$JAR_OUT" "$JAD_OUT"
-echo "JAR SHA-256:"
-sha256sum "$JAR_OUT"
-echo "JAR contents:"
-jar tf "$JAR_OUT"
-echo "Manifest:"
-unzip -p "$JAR_OUT" META-INF/MANIFEST.MF
-; then
-  echo "Final JAR is missing DeviceBrowserCanvas.class." >&2
+MANIFEST_COUNT="$(jar tf "$JAR_OUT" | grep -c '^META-INF/MANIFEST.MF$' || true)"
+if [[ "$MANIFEST_COUNT" != "1" ]]; then
+  echo "Final JAR must contain exactly one manifest (found $MANIFEST_COUNT)." >&2
   exit 1
 fi
 
@@ -190,6 +152,11 @@ MIDlet-Permissions: javax.microedition.io.Connector.bluetooth.client
 MIDlet-Jar-URL: NokiaBTController-1.0.0.jar
 MIDlet-Jar-Size: $JAR_SIZE
 EOF
+
+if [[ "$(grep '^MIDlet-Jar-Size:' "$JAD_OUT" | awk '{print $2}')" != "$JAR_SIZE" ]]; then
+  echo "JAD JAR size does not match the built JAR." >&2
+  exit 1
+fi
 
 echo
 echo "Build complete:"
