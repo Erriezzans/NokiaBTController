@@ -69,3 +69,26 @@ The C5-00 has no analog sticks, so it cannot provide true analog positions or a 
 The Android device must be rooted, authorize the receiver's `su` request, and expose `/dev/uinput` (or `/dev/input/uinput`). SELinux must allow the root process to access it. Some games filter controller identities or support only particular layouts. This is a local virtual input device, not a Bluetooth HID gamepad exposed to another host.
 
 See [docs/PROTOCOL.md](docs/PROTOCOL.md) and [docs/TESTING.md](docs/TESTING.md).
+
+
+## Nokia C5-00 controls (revised keypad UI)
+
+1. Start the Android receiver and leave it listening.
+2. Pair the Nokia C5-00 and Android device in their Bluetooth settings.
+3. On Nokia, choose **Find devices**. The app lists nearby/paired Bluetooth devices; select the Android receiver from that list.
+4. Choose **Remote** or **Gamepad** from the Options menu.
+
+### TV remote mode
+- D-pad and centre: navigate/select; when Mouse is enabled, D-pad moves the pointer and centre clicks.
+- `*`: toggle mouse mode.
+- `#`: Back; `0`: Home; `7/9`: volume down/up.
+- `1`: Menu; `2`: Play/Pause; `3`: Mute; `4`: Rewind; `6`: Fast-forward; `8`: Stop.
+- **Send text** opens the Nokia text editor. Typed basic ASCII text is sent as keyboard events; remote shortcuts are not active while this editor is open.
+
+### Gamepad mode
+- D-pad: D-pad and digital left-stick axes.
+- `1/2/3/4`: Square/Triangle/Circle/Cross.
+- `7/9`: L1/R1; `*/#`: L2/R2.
+- `6/8`: L3/R3; `5/0`: Select/Start.
+
+The 240x320 drawing uses the actual Canvas dimensions and scales its control spacing to keep the control groups within the screen. The physical keypad remains the input device; the graphics are a labelled key map, not touch controls.
