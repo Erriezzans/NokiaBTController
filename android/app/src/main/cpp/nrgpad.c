@@ -32,12 +32,14 @@
 #define PAD_R2 7
 #define PAD_SELECT 8
 #define PAD_START 9
+#define PAD_L3 10
+#define PAD_R3 11
 
 static int keyboard_fd = -1;
 static int mouse_fd = -1;
 static int gamepad_fd = -1;
 static int keyboard_down[768];
-static int pad_down[10];
+static int pad_down[12];
 static int hat_x = 0;
 static int hat_y = 0;
 static int axis_x = 0;
@@ -153,7 +155,7 @@ static int setup_keyboard(void) {
         KEY_SPACE,KEY_BACKSPACE,KEY_LEFTSHIFT,KEY_MINUS,KEY_EQUAL,KEY_COMMA,KEY_DOT,
         KEY_SLASH,KEY_SEMICOLON,KEY_APOSTROPHE,KEY_LEFTBRACE,KEY_RIGHTBRACE,KEY_BACKSLASH,
         KEY_ESC,KEY_ENTER,KEY_HOME,KEY_UP,KEY_DOWN,KEY_LEFT,KEY_RIGHT,
-        KEY_VOLUMEDOWN,KEY_VOLUMEUP,KEY_PLAYPAUSE,KEY_BACK,KEY_MENU,
+        KEY_VOLUMEDOWN,KEY_VOLUMEUP,KEY_PLAYPAUSE,KEY_BACK,KEY_MENU,KEY_MUTE,KEY_STOP,KEY_REWIND,KEY_FASTFORWARD,
         KEY_PAGEUP,KEY_PAGEDOWN
     };
     /* Original TV remote keys are included above. */
@@ -184,7 +186,7 @@ static int setup_mouse(void) {
 static int setup_gamepad(void) {
     static const unsigned short keys[] = {
         BTN_GAMEPAD, BTN_SOUTH, BTN_EAST, BTN_WEST, BTN_NORTH,
-        BTN_TL, BTN_TR, BTN_TL2, BTN_TR2, BTN_SELECT, BTN_START
+        BTN_TL, BTN_TR, BTN_TL2, BTN_TR2, BTN_SELECT, BTN_START, BTN_THUMBL, BTN_THUMBR
     };
     static const unsigned short abss[] = { ABS_X, ABS_Y, ABS_HAT0X, ABS_HAT0Y, ABS_Z, ABS_RZ };
     gamepad_fd = open_uinput();
@@ -207,6 +209,8 @@ static int pad_key_code(int button) {
         case PAD_R2: return BTN_TR2;
         case PAD_SELECT: return BTN_SELECT;
         case PAD_START: return BTN_START;
+        case PAD_L3: return BTN_THUMBL;
+        case PAD_R3: return BTN_THUMBR;
         default: return -1;
     }
 }
@@ -226,7 +230,7 @@ static void reset_inputs(void) {
         emit_syn(mouse_fd);
     }
     if (gamepad_fd >= 0) {
-        for (i = 0; i < 10; i++) {
+        for (i = 0; i < 12; i++) {
             int code = pad_key_code(i);
             if (code >= 0 && pad_down[i]) emit_event(gamepad_fd, EV_KEY, (unsigned short)code, 0);
             pad_down[i] = 0;
@@ -305,7 +309,7 @@ static void handle_packet(const unsigned char *packet) {
             }
             break;
         case PKT_PAD_BUTTON:
-            if (gamepad_fd >= 0 && code >= 0 && code < 10) {
+            if (gamepad_fd >= 0 && code >= 0 && code < 12) {
                 int key = pad_key_code(code);
                 if (key >= 0) {
                     emit_event(gamepad_fd, EV_KEY, (unsigned short)key, value ? 1 : 0);
