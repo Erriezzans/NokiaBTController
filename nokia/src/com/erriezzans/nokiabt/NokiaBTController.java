@@ -1,15 +1,14 @@
 package com.erriezzans.nokiabt;
 
 import java.util.Vector;
+import javax.bluetooth.RemoteDevice;
 import javax.microedition.lcdui.Command;
 import javax.microedition.lcdui.CommandListener;
 import javax.microedition.lcdui.Display;
 import javax.microedition.lcdui.Displayable;
-import javax.microedition.lcdui.List;
 import javax.microedition.lcdui.TextBox;
 import javax.microedition.lcdui.TextField;
 import javax.microedition.midlet.MIDlet;
-import javax.bluetooth.RemoteDevice;
 
 /** Nokia C5-00 Java ME Bluetooth remote and gamepad. */
 public final class NokiaBTController extends MIDlet implements CommandListener {
@@ -22,13 +21,15 @@ public final class NokiaBTController extends MIDlet implements CommandListener {
         KEY_PLAYPAUSE=164, KEY_BACK=158, KEY_MENU=139, KEY_MUTE=113,
         KEY_CHANNELUP=0, KEY_CHANNELDOWN=0, KEY_STOP=128, KEY_REWIND=168, KEY_FASTFORWARD=208;
     static final int MODE_REMOTE=0, MODE_MOUSE=1, MODE_GAMEPAD=2;
+
     private Display display;
     private RemoteCanvas canvas;
+    private DeviceBrowserCanvas deviceBrowser;
     private BluetoothClient bluetooth;
-    private List deviceList;
     private Vector foundDevices;
     private TextBox textBox;
     private final KeyMap keyMap = new KeyMap();
+
     private final Command sendTextCommand=new Command("Send",Command.OK,1);
     private final Command cancelTextCommand=new Command("Cancel",Command.CANCEL,2);
     private final Command connectCommand=new Command("Find devices",Command.SCREEN,1);
@@ -37,49 +38,100 @@ public final class NokiaBTController extends MIDlet implements CommandListener {
     private final Command mouseCommand=new Command("Mouse ON/OFF",Command.SCREEN,4);
     private final Command textCommand=new Command("Send text",Command.SCREEN,5);
     private final Command keyRemapCommand=new Command("Key remap",Command.SCREEN,6);
-    private final Command disconnectCommand=new Command("Disconnect",Command.SCREEN,6);
+    private final Command disconnectCommand=new Command("Disconnect",Command.SCREEN,7);
     private final Command exitCommand=new Command("Exit",Command.EXIT,9);
+
     public NokiaBTController() {
-        display=Display.getDisplay(this); canvas=new RemoteCanvas(this);
-        canvas.addCommand(connectCommand); canvas.addCommand(remoteCommand);
-        canvas.addCommand(gamepadCommand); canvas.addCommand(mouseCommand);
-        canvas.addCommand(textCommand); canvas.addCommand(keyRemapCommand); canvas.addCommand(disconnectCommand);
-        canvas.addCommand(exitCommand); canvas.setCommandListener(this);
+        display=Display.getDisplay(this);
+        canvas=new RemoteCanvas(this);
+        canvas.addCommand(connectCommand);
+        canvas.addCommand(remoteCommand);
+        canvas.addCommand(gamepadCommand);
+        canvas.addCommand(mouseCommand);
+        canvas.addCommand(textCommand);
+        canvas.addCommand(keyRemapCommand);
+        canvas.addCommand(disconnectCommand);
+        canvas.addCommand(exitCommand);
+        canvas.setCommandListener(this);
         bluetooth=new BluetoothClient(this);
     }
+
     public void startApp(){display.setCurrent(canvas);canvas.refresh();}
     public void pauseApp(){}
-    public void destroyApp(boolean unconditional){if(bluetooth!=null)bluetooth.disconnect();notifyDestroyed();}
-    void connectBluetooth(){if(bluetooth!=null&&!bluetooth.isConnected())bluetooth.discover();}
+    public void destroyApp(boolean unconditional){
+        if(bluetooth!=null)bluetooth.disconnect();
+        notifyDestroyed();
+    }
+
+    void connectBluetooth(){openDeviceBrowser();}
+
+    private void openDeviceBrowser(){
+        if(deviceBrowser==null)deviceBrowser=new DeviceBrowserCanvas(this);
+        display.setCurrent(deviceBrowser);
+        deviceBrowser.setPageState(DeviceBrowserCanvas.SEARCHING,"Starting Bluetooth search...");
+        bluetooth.discover();
+    }
+
     void selectDevice(int index){
-        if(foundDevices==null||index<0||index>=foundDevices.size())return;
-        bluetooth.connectTo((RemoteDevice)foundDevices.elementAt(index));
-        display.setCurrent(canvas);
+        if(foundDevices==null||index<0||index>=foundDevices.size()||deviceBrowser==null)return;
+        RemoteDevice device=(RemoteDevice)foundDevices.elementAt(index);
+        String name=deviceLabel(device);
+        deviceBrowser.setPageState(DeviceBrowserCanvas.CONNECTING,"Finding receiver service on "+name+"...");
+        bluetooth.connectTo(device);
     }
-    void showDevices(Vector devices){
-        foundDevices=devices;
-        if(devices==null||devices.size()==0){setStatus("No devices found. Pair Android first.");return;}
-        deviceList=new List("Choose Android device",List.IMPLICIT);
-        for(int i=0;i<devices.size();i++){
-            RemoteDevice d=(RemoteDevice)devices.elementAt(i);
-            String name;
-            try{name=d.getFriendlyName(false);}catch(Exception e){name=null;}
-            if(name==null||name.length()==0)name=d.getBluetoothAddress();
-            deviceList.append(name+"  ["+d.getBluetoothAddress()+"]",null);
-        }
-        deviceList.setCommandListener(this);
-        display.setCurrent(deviceList);
+
+    void updateDeviceBrowser(final Vector devices,final int state,final String message){
+        final Vector safe=devices==null?new Vector():devices;
+        display.callSerially(new Runnable(){public void run(){
+            foundDevices=safe;
+            if(deviceBrowser!=null){
+                deviceBrowser.setDevices(safe);
+                deviceBrowser.setPageState(state,message);
+            }
+        }});
     }
+
+    void connectionSucceeded(final String name){
+        display.callSerially(new Runnable(){public void run(){
+            canvas.setConnectionStatus("Connected: "+name);
+            canvas.refresh();
+            display.setCurrent(canvas);
+        }});
+    }
+
+    void connectionFailed(final String message){
+        display.callSerially(new Runnable(){public void run(){
+            if(deviceBrowser!=null)deviceBrowser.setPageState(DeviceBrowserCanvas.ERROR,message);
+            else canvas.setConnectionStatus("Connection failed: "+message);
+        }});
+    }
+
+    private String deviceLabel(RemoteDevice device){
+        try{
+            String name=device.getFriendlyName(false);
+            if(name!=null&&name.length()>0)return name;
+        }catch(Exception ignored){}
+        return device.getBluetoothAddress();
+    }
+
     private void showTextEntry(){
         textBox=new TextBox("Send text to Android","",160,TextField.ANY);
-        textBox.addCommand(sendTextCommand);textBox.addCommand(cancelTextCommand);textBox.setCommandListener(this);
+        textBox.addCommand(sendTextCommand);
+        textBox.addCommand(cancelTextCommand);
+        textBox.setCommandListener(this);
         display.setCurrent(textBox);
     }
-    void disconnectBluetooth(){if(bluetooth!=null)bluetooth.disconnect();canvas.setConnectionStatus("Disconnected");}
+
+    void disconnectBluetooth(){
+        if(bluetooth!=null)bluetooth.disconnect();
+        canvas.setConnectionStatus("Disconnected");
+    }
+
     int findGamepadButton(char key){return keyMap.findButton(key);}
     String gamepadKeyLabel(int button){return keyMap.getKeyLabel(button);}
     void showMainScreen(){display.setCurrent(canvas);}
     void showKeyRemap(){display.setCurrent(new KeyRemapForm(this,keyMap.getMappings()));}
+
     void saveKeyMappings(int[] values){
         boolean persisted=keyMap.setMappings(values);
         display.setCurrent(canvas);
@@ -87,19 +139,37 @@ public final class NokiaBTController extends MIDlet implements CommandListener {
         else setStatus("Mapping applied, but phone could not save it to memory.");
         canvas.refresh();
     }
+
     boolean isConnected(){return bluetooth!=null&&bluetooth.isConnected();}
     void send(byte type,int code,int value){if(bluetooth!=null)bluetooth.send(type,code,value);}
-    void setStatus(String value){canvas.setConnectionStatus(value);}
+
+    void setStatus(final String value){
+        display.callSerially(new Runnable(){public void run(){canvas.setConnectionStatus(value);}});
+    }
+
     public void commandAction(Command command,Displayable d){
-        if(d==deviceList){if(command==List.SELECT_COMMAND)selectDevice(deviceList.getSelectedIndex());return;}
-        if(command==connectCommand)connectBluetooth();
+        if(d==deviceBrowser){
+            if(command==deviceBrowser.getConnectCommand())selectDevice(deviceBrowser.getSelectedIndex());
+            else if(command==deviceBrowser.getScanCommand()){
+                deviceBrowser.setPageState(DeviceBrowserCanvas.SEARCHING,"Searching for paired and nearby devices...");
+                bluetooth.discover();
+            }else if(command==deviceBrowser.getBackCommand())display.setCurrent(canvas);
+            return;
+        }
+
+        if(command==connectCommand)openDeviceBrowser();
         else if(command==remoteCommand)canvas.setMode(MODE_REMOTE);
         else if(command==gamepadCommand)canvas.setMode(MODE_GAMEPAD);
         else if(command==mouseCommand)canvas.toggleMouse();
         else if(command==textCommand)showTextEntry();
         else if(command==keyRemapCommand)showKeyRemap();
         else if(d==textBox){
-            if(command==sendTextCommand){String value=textBox.getString();for(int i=0;i<value.length();i++)send(PKT_TEXT,value.charAt(i),1);send(PKT_KEY,KEY_ENTER,1);send(PKT_KEY,KEY_ENTER,0);}
+            if(command==sendTextCommand){
+                String value=textBox.getString();
+                for(int i=0;i<value.length();i++)send(PKT_TEXT,value.charAt(i),1);
+                send(PKT_KEY,KEY_ENTER,1);
+                send(PKT_KEY,KEY_ENTER,0);
+            }
             display.setCurrent(canvas);
         }
         else if(command==disconnectCommand)disconnectBluetooth();
