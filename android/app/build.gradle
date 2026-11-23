@@ -1,0 +1,46 @@
+plugins {
+    id 'com.android.application'
+}
+
+android {
+    namespace 'com.erriezzans.nokiabt'
+    compileSdk 35
+
+    defaultConfig {
+        applicationId 'com.erriezzans.nokiabt'
+        minSdk 23
+        targetSdk 35
+        versionCode 1
+        versionName '1.0.0'
+        ndk { abiFilters 'arm64-v8a', 'armeabi-v7a', 'x86_64' }
+        externalNativeBuild {
+            cmake { arguments '-DANDROID_STL=none' }
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    externalNativeBuild {
+        cmake {
+            path file('src/main/cpp/CMakeLists.txt')
+            version '3.22.1'
+        }
+    }
+
+    packaging {
+        jniLibs { useLegacyPackaging = true }
+    }
+}
+
+// The NDK builds nrgpad as an executable. CMake writes it directly into
+// src/main/assets/bin/<ABI>, where the receiver extracts it before su launch.
+
+afterEvaluate {
+    // Ensure CMake's executable assets exist before any variant merges app assets.
+    tasks.matching { it.name.startsWith('merge') && it.name.endsWith('Assets') }.configureEach {
+        dependsOn tasks.matching { it.name.startsWith('externalNativeBuild') }
+    }
+}
