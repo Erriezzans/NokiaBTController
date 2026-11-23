@@ -141,6 +141,11 @@ final class BluetoothClient implements DiscoveryListener {
             if(connecting||connected)return;
             connecting=true;
         }
+        // Wake the inquiry thread so it can cancel promptly and release the radio.
+        synchronized(lock){lock.notifyAll();}
+        if(agent!=null){
+            try{agent.cancelInquiry(this);}catch(Exception ignored){}
+        }
 
         app.updateDeviceBrowser(copyDevices(),DeviceBrowserCanvas.CONNECTING,
                 "Stopping device scan before connection...");
