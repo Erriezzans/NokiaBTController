@@ -19,6 +19,7 @@ final class Protocol {
     static final int PAD_AXIS = 6;
     static final int RESET = 7;
     static final int MODE = 8;
+    static final int TEXT = 9;
 
     static final int MODE_REMOTE = 0;
     static final int MODE_MOUSE = 1;
