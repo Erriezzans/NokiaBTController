@@ -93,8 +93,8 @@ final class RemoteCanvas extends Canvas {
         // L3/R3 stick-click buttons and Select/Start.
         g.fillRoundRect(x-20,y+d*3/2+4,40,18,8,8);
         g.fillRoundRect(bx-20,by+d*3/2+4,40,18,8,8);
-        g.fillRoundRect(cx-47,h-foot-24,42,18,8,8);
-        g.fillRoundRect(cx+5,h-foot-24,42,18,8,8);
+        g.fillRoundRect(cx-47,h-foot-20,42,18,8,8);
+        g.fillRoundRect(cx+5,h-foot-20,42,18,8,8);
         g.setColor(245,248,255);
         g.drawString("^",x,y-d*3/2+8,Graphics.TOP|Graphics.HCENTER);
         g.drawString("v",x,y+d/2+8,Graphics.TOP|Graphics.HCENTER);
@@ -107,8 +107,8 @@ final class RemoteCanvas extends Canvas {
         g.setFont(Font.getFont(Font.FACE_SYSTEM,Font.STYLE_PLAIN,Font.SIZE_SMALL));
         g.drawString("L3 (6)",x,y+d*3/2+6,Graphics.TOP|Graphics.HCENTER);
         g.drawString("R3 (8)",bx,by+d*3/2+6,Graphics.TOP|Graphics.HCENTER);
-        g.drawString("SELECT (5)",cx-26,h-foot-21,Graphics.TOP|Graphics.HCENTER);
-        g.drawString("START (0)",cx+26,h-foot-21,Graphics.TOP|Graphics.HCENTER);
+        g.drawString("SELECT (5)",cx-26,h-foot-17,Graphics.TOP|Graphics.HCENTER);
+        g.drawString("START (0)",cx+26,h-foot-17,Graphics.TOP|Graphics.HCENTER);
     }
     protected void keyPressed(int keyCode){
         int a=getGameAction(keyCode);char c=keyChar(keyCode);
