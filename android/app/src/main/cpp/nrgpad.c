@@ -158,13 +158,6 @@ static int setup_keyboard(void) {
         KEY_VOLUMEDOWN,KEY_VOLUMEUP,KEY_PLAYPAUSE,KEY_BACK,KEY_MENU,KEY_MUTE,KEY_STOP,KEY_REWIND,KEY_FASTFORWARD,
         KEY_PAGEUP,KEY_PAGEDOWN
     };
-    /* Original TV remote keys are included above. */
-    /*
-        KEY_ESC, KEY_ENTER, KEY_HOME, KEY_UP, KEY_DOWN, KEY_LEFT, KEY_RIGHT,
-        KEY_VOLUMEDOWN, KEY_VOLUMEUP, KEY_PLAYPAUSE, KEY_BACK, KEY_MENU,
-        KEY_PAGEUP, KEY_PAGEDOWN
-    };
-    */
     keyboard_fd = open_uinput();
     if (keyboard_fd < 0) return -1;
     if (create_device(keyboard_fd, "Nokia Bluetooth Remote", 0x0001, 0x1001,
@@ -265,13 +258,13 @@ static void emit_text_char(int ch) {
     else if (ch == '?') { key = KEY_SLASH; shift = 1; }
     else if (ch == ';') key = KEY_SEMICOLON;
     else if (ch == ':') { key = KEY_SEMICOLON; shift = 1; }
-    else if (ch == '\\'') key = KEY_APOSTROPHE;
+    else if (ch == 39) key = KEY_APOSTROPHE;
     else if (ch == '"') { key = KEY_APOSTROPHE; shift = 1; }
     else if (ch == '[') key = KEY_LEFTBRACE;
     else if (ch == '{') { key = KEY_LEFTBRACE; shift = 1; }
     else if (ch == ']') key = KEY_RIGHTBRACE;
     else if (ch == '}') { key = KEY_RIGHTBRACE; shift = 1; }
-    else if (ch == '\\\\') key = KEY_BACKSLASH;
+    else if (ch == 92) key = KEY_BACKSLASH;
     else if (ch == '|') { key = KEY_BACKSLASH; shift = 1; }
     else return;
     if (shift) emit_event(keyboard_fd, EV_KEY, KEY_LEFTSHIFT, 1);
