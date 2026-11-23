@@ -1,0 +1,39 @@
+name: Build Nokia C5-00 Java ME app
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "nokia/**"
+      - "scripts/build_nokia.sh"
+      - ".github/workflows/build-nokia.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-nokia-midlet:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Build and preverify MIDlet
+        run: bash scripts/build_nokia.sh
+
+      - name: Upload Nokia JAR and JAD
+        uses: actions/upload-artifact@v4
+        with:
+          name: NokiaBTController-JavaME-1.0.0
+          path: |
+            dist/NokiaBTController-1.0.0.jar
+            dist/NokiaBTController-1.0.0.jad
+          if-no-files-found: error
+          retention-days: 30
