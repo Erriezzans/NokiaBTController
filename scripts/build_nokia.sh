@@ -61,7 +61,6 @@ java -jar "$ECJ_JAR" -nowarn \
 
 if ! find "$CLASSES_DIR" -type f -name '*.class' -print -quit | grep -q .; then
   echo "ECJ completed but produced no .class files." >&2
-  echo "Source file list:" >&2
   cat "$BUILD_DIR/sources.txt" >&2
   exit 1
 fi
@@ -98,7 +97,10 @@ EOF
 
 JAR_OUT="$DIST_DIR/NokiaBTController-1.0.0.jar"
 JAD_OUT="$DIST_DIR/NokiaBTController-1.0.0.jad"
+PACKAGE_DIR="$BUILD_DIR/package"
 rm -f "$JAR_OUT" "$JAD_OUT"
+rm -rf "$PACKAGE_DIR"
+mkdir -p "$PACKAGE_DIR"
 
 if ! jar tf "$PREVERIFIED_JAR" | grep -q '^com/erriezzans/nokiabt/NokiaBTController.class$'; then
   echo "Preverified archive is missing the MIDlet class; refusing to package an empty JAR." >&2
@@ -106,43 +108,20 @@ if ! jar tf "$PREVERIFIED_JAR" | grep -q '^com/erriezzans/nokiabt/NokiaBTControl
   exit 1
 fi
 
-PACKAGE_DIR="$BUILD_DIR/package"
-rm -rf "$PACKAGE_DIR"
-mkdir -p "$PACKAGE_DIR"
 (cd "$PACKAGE_DIR" && jar xf "$PREVERIFIED_JAR")
 rm -f "$PACKAGE_DIR/META-INF/MANIFEST.MF"
 jar cfm "$JAR_OUT" "$MANIFEST" -C "$PACKAGE_DIR" .
 
-if ! jar tf "$JAR_OUT" | grep -q '^com/erriezzans/nokiabt/NokiaBTController.class
+if ! jar tf "$JAR_OUT" | grep -q '^com/erriezzans/nokiabt/NokiaBTController.class$'; then
   echo "Final JAR is missing the MIDlet class." >&2
   exit 1
 fi
-
-JAR_SIZE="$(wc -c < "$JAR_OUT" | tr -d '[:space:]')"
-cat > "$JAD_OUT" <<EOF
-MIDlet-Name: Nokia BT Controller
-MIDlet-Version: 1.0.0
-MIDlet-Vendor: Erriezzans
-MIDlet-1: Nokia BT Controller,,com.erriezzans.nokiabt.NokiaBTController
-MIDlet-Description: Bluetooth TV remote, mouse and gamepad for Android
-MicroEdition-Configuration: CLDC-1.1
-MicroEdition-Profile: MIDP-2.0
-MIDlet-Permissions: javax.microedition.io.Connector.bluetooth.client
-MIDlet-Jar-URL: NokiaBTController-1.0.0.jar
-MIDlet-Jar-Size: $JAR_SIZE
-EOF
-
-echo
-echo "Build complete:"
-ls -lh "$JAR_OUT" "$JAD_OUT"
-echo "JAR SHA-256:"
-sha256sum "$JAR_OUT"
-echo "JAR contents:"
-jar tf "$JAR_OUT"
-echo "Manifest:"
-unzip -p "$JAR_OUT" META-INF/MANIFEST.MF
-; then
-  echo "Final JAR is missing the MIDlet class." >&2
+if ! jar tf "$JAR_OUT" | grep -q '^com/erriezzans/nokiabt/KeyRemapForm.class$'; then
+  echo "Final JAR is missing KeyRemapForm.class." >&2
+  exit 1
+fi
+if ! jar tf "$JAR_OUT" | grep -q '^com/erriezzans/nokiabt/KeyMap.class$'; then
+  echo "Final JAR is missing KeyMap.class." >&2
   exit 1
 fi
 
