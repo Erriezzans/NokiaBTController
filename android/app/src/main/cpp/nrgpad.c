@@ -240,9 +240,13 @@ static void reset_inputs(void) {
 }
 
 static void emit_text_char(int ch) {
+    static const unsigned short letters[26] = {
+        KEY_A,KEY_B,KEY_C,KEY_D,KEY_E,KEY_F,KEY_G,KEY_H,KEY_I,KEY_J,KEY_K,KEY_L,KEY_M,
+        KEY_N,KEY_O,KEY_P,KEY_Q,KEY_R,KEY_S,KEY_T,KEY_U,KEY_V,KEY_W,KEY_X,KEY_Y,KEY_Z
+    };
     int key = 0, shift = 0;
-    if (ch >= 'a' && ch <= 'z') key = KEY_A + (ch - 'a');
-    else if (ch >= 'A' && ch <= 'Z') { key = KEY_A + (ch - 'A'); shift = 1; }
+    if (ch >= 'a' && ch <= 'z') key = letters[ch - 'a'];
+    else if (ch >= 'A' && ch <= 'Z') { key = letters[ch - 'A']; shift = 1; }
     else if (ch >= '1' && ch <= '9') key = KEY_1 + (ch - '1');
     else if (ch == '0') key = KEY_0;
     else if (ch == ' ') key = KEY_SPACE;
