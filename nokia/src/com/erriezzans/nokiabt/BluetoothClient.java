@@ -157,7 +157,7 @@ final class BluetoothClient implements DiscoveryListener {
                         "Connecting securely to "+name+"...");
                 connection=(StreamConnection)Connector.open(url,Connector.WRITE,true);
                 output=connection.openDataOutputStream();
-                synchronized(this){connected=true;}
+                synchronized(BluetoothClient.this){connected=true;}
                 send(NokiaBTController.PKT_MODE,NokiaBTController.MODE_REMOTE,0);
                 if(!isConnected())throw new IOException("Bluetooth output stream closed during setup.");
                 app.connectionSucceeded(name);
