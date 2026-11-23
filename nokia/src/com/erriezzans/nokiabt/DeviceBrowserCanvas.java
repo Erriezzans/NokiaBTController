@@ -72,11 +72,11 @@ final class DeviceBrowserCanvas extends Canvas {
 
         int cardY=53;
         g.setColor(26,38,56);
-        g.fillRoundRect(7,cardY,w-14,43,9,9);
+        g.fillRoundRect(7,cardY,w-14,52,9,9);
         g.setColor(state==CONNECTING?255:state==ERROR?255:91,
                    state==CONNECTING?190:state==ERROR?145:208,
                    state==CONNECTING?92:state==ERROR?105:190);
-        g.fillRoundRect(7,cardY,4,43,4,4);
+        g.fillRoundRect(7,cardY,4,52,4,4);
         g.setFont(Font.getFont(Font.FACE_SYSTEM,Font.STYLE_BOLD,Font.SIZE_SMALL));
         g.setColor(245,248,253);
         String label=state==SEARCHING?"SEARCHING":state==CONNECTING?"CONNECTING":
@@ -84,15 +84,15 @@ final class DeviceBrowserCanvas extends Canvas {
         g.drawString(label,17,cardY+6,Graphics.TOP|Graphics.LEFT);
         g.setFont(Font.getFont(Font.FACE_SYSTEM,Font.STYLE_PLAIN,Font.SIZE_SMALL));
         g.setColor(185,201,221);
-        drawFit(g,status,17,cardY+22,w-34,Graphics.TOP|Graphics.LEFT);
+        drawStatus(g,17,cardY+21,w-34);
 
         g.setFont(Font.getFont(Font.FACE_SYSTEM,Font.STYLE_BOLD,Font.SIZE_SMALL));
         g.setColor(228,236,247);
-        g.drawString("AVAILABLE DEVICES",9,105,Graphics.TOP|Graphics.LEFT);
+        g.drawString("AVAILABLE DEVICES",9,111,Graphics.TOP|Graphics.LEFT);
         g.setColor(105,125,150);
-        g.drawString(String.valueOf(devices.size()),w-11,105,Graphics.TOP|Graphics.RIGHT);
+        g.drawString(String.valueOf(devices.size()),w-11,111,Graphics.TOP|Graphics.RIGHT);
 
-        int listTop=123;
+        int listTop=129;
         int listBottom=h-footer-5;
         int rowHeight=39;
         int visible=(listBottom-listTop)/rowHeight;
@@ -165,6 +165,33 @@ final class DeviceBrowserCanvas extends Canvas {
     private String deviceAddress(RemoteDevice device) {
         try { return device.getBluetoothAddress(); }
         catch(Exception ignored) { return "Bluetooth device"; }
+    }
+
+    private void drawStatus(Graphics g,int x,int y,int maxWidth) {
+        String value=status==null?"":status;
+        Font font=g.getFont();
+        int end=fitEnd(font,value,0,maxWidth);
+        if(end<=0)return;
+        g.drawString(value.substring(0,end),x,y,Graphics.TOP|Graphics.LEFT);
+        int next=end;
+        while(next<value.length()&&value.charAt(next)==' ')next++;
+        if(next<value.length()){
+            int secondEnd=fitEnd(font,value,next,maxWidth);
+            String second=value.substring(next,secondEnd);
+            if(secondEnd<value.length()&&second.length()>2)
+                second=second.substring(0,second.length()-2)+"..";
+            g.drawString(second,x,y+11,Graphics.TOP|Graphics.LEFT);
+        }
+    }
+
+    private int fitEnd(Font font,String value,int start,int maxWidth) {
+        int end=start,lastSpace=-1;
+        while(end<value.length()&&font.stringWidth(value.substring(start,end+1))<=maxWidth){
+            if(value.charAt(end)==' ')lastSpace=end;
+            end++;
+        }
+        if(end<value.length()&&lastSpace>=start)end=lastSpace;
+        return end;
     }
 
     private void drawFit(Graphics g,String value,int x,int y,int maxWidth,int anchor) {
