@@ -28,3 +28,21 @@ The Java ME build does not build the Android APK. The Android app requires its o
 ## Known device requirements
 
 The C5-00 app requires the device's JSR-82 Bluetooth implementation and the Bluetooth client permission. Native gamepad/mouse input on Android requires a rooted build (or equivalent privileged helper), kernel uinput support, and working SELinux access.
+
+
+## Revised Nokia UI and pairing
+
+- [x] Bluetooth inquiry includes paired devices and newly discovered devices.
+- [x] Nokia displays a selectable Bluetooth device list instead of silently choosing the first device.
+- [x] Selected-device service discovery requests the receiver's exact RFCOMM UUID.
+- [x] Remote layout uses runtime screen dimensions; TV remote adds menu, media, mute, volume, home, back and mouse controls.
+- [x] Separate MIDP text-entry screen sends basic ASCII keystrokes; keypad shortcuts are suspended while typing.
+- [x] Gamepad layout labels and draws D-pad, face buttons, L1/L2/R1/R2, L3/R3, Select and Start.
+- [x] Latest Java ME JAR/JAD build passed GitHub Actions and archive/manifest/JAD-size checks.
+- [ ] Nokia C5-00 physical screen, Bluetooth discovery and key behaviour test.
+
+## Android helper changes
+
+- [x] Native helper source expanded for text entry, media keys and L3/R3.
+- [ ] Android APK build and ABI asset verification (GitHub Actions run: https://github.com/Erriezzans/NokiaBTController/actions/runs/45201894352).
+- [ ] Root/uinput runtime test on Android hardware.
