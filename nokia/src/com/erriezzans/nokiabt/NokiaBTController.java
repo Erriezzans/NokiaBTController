@@ -28,6 +28,7 @@ public final class NokiaBTController extends MIDlet implements CommandListener {
     private List deviceList;
     private Vector foundDevices;
     private TextBox textBox;
+    private final KeyMap keyMap = new KeyMap();
     private final Command sendTextCommand=new Command("Send",Command.OK,1);
     private final Command cancelTextCommand=new Command("Cancel",Command.CANCEL,2);
     private final Command connectCommand=new Command("Find devices",Command.SCREEN,1);
@@ -35,13 +36,14 @@ public final class NokiaBTController extends MIDlet implements CommandListener {
     private final Command gamepadCommand=new Command("Gamepad",Command.SCREEN,3);
     private final Command mouseCommand=new Command("Mouse ON/OFF",Command.SCREEN,4);
     private final Command textCommand=new Command("Send text",Command.SCREEN,5);
+    private final Command keyRemapCommand=new Command("Key remap",Command.SCREEN,6);
     private final Command disconnectCommand=new Command("Disconnect",Command.SCREEN,6);
     private final Command exitCommand=new Command("Exit",Command.EXIT,9);
     public NokiaBTController() {
         display=Display.getDisplay(this); canvas=new RemoteCanvas(this);
         canvas.addCommand(connectCommand); canvas.addCommand(remoteCommand);
         canvas.addCommand(gamepadCommand); canvas.addCommand(mouseCommand);
-        canvas.addCommand(textCommand); canvas.addCommand(disconnectCommand);
+        canvas.addCommand(textCommand); canvas.addCommand(keyRemapCommand); canvas.addCommand(disconnectCommand);
         canvas.addCommand(exitCommand); canvas.setCommandListener(this);
         bluetooth=new BluetoothClient(this);
     }
@@ -74,6 +76,17 @@ public final class NokiaBTController extends MIDlet implements CommandListener {
         display.setCurrent(textBox);
     }
     void disconnectBluetooth(){if(bluetooth!=null)bluetooth.disconnect();canvas.setConnectionStatus("Disconnected");}
+    int findGamepadButton(char key){return keyMap.findButton(key);}
+    String gamepadKeyLabel(int button){return keyMap.getKeyLabel(button);}
+    void showMainScreen(){display.setCurrent(canvas);}
+    void showKeyRemap(){display.setCurrent(new KeyRemapForm(this,keyMap.getMappings()));}
+    void saveKeyMappings(int[] values){
+        boolean persisted=keyMap.setMappings(values);
+        display.setCurrent(canvas);
+        if(persisted)setStatus("Gamepad key mapping saved.");
+        else setStatus("Mapping applied, but phone could not save it to memory.");
+        canvas.refresh();
+    }
     boolean isConnected(){return bluetooth!=null&&bluetooth.isConnected();}
     void send(byte type,int code,int value){if(bluetooth!=null)bluetooth.send(type,code,value);}
     void setStatus(String value){canvas.setConnectionStatus(value);}
@@ -84,6 +97,7 @@ public final class NokiaBTController extends MIDlet implements CommandListener {
         else if(command==gamepadCommand)canvas.setMode(MODE_GAMEPAD);
         else if(command==mouseCommand)canvas.toggleMouse();
         else if(command==textCommand)showTextEntry();
+        else if(command==keyRemapCommand)showKeyRemap();
         else if(d==textBox){
             if(command==sendTextCommand){String value=textBox.getString();for(int i=0;i<value.length();i++)send(PKT_TEXT,value.charAt(i),1);send(PKT_KEY,KEY_ENTER,1);send(PKT_KEY,KEY_ENTER,0);}
             display.setCurrent(canvas);
