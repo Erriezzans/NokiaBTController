@@ -6,18 +6,18 @@
 - [x] CLDC preverification completed with ProGuard microedition mode.
 - [x] Dedicated `DeviceBrowserCanvas` compiled and included in the release JAR.
 - [x] Bluetooth search browser shows live paired/cached/inquiry results, D-pad selection, Connect, Scan again and Back actions.
-- [x] Connection progress and connection errors remain on the device browser; successful connection returns to the remote screen.
+- [x] Connection attempts now wait for the inquiry to stop before SDP lookup; connection status/error messages show the current stage on two lines, and successful connection returns to the remote screen.
 - [x] Persistent `KeyMap` and `KeyRemapForm` classes are included.
 - [x] JAR archive integrity check passed.
-- [x] JAD `MIDlet-Jar-Size` matches the generated JAR: 27,706 bytes.
+- [x] JAD `MIDlet-Jar-Size` matches the generated JAR: 29,148 bytes.
 - [x] JAR manifest contains one MIDlet manifest and all required MIDlet attributes.
 - [ ] Installation, on-screen layout and Bluetooth testing on a physical Nokia C5-00.
 
-Latest successful GitHub Actions run: https://github.com/Erriezzans/NokiaBTController/actions/runs/45207317113
+Latest successful GitHub Actions run: https://github.com/Erriezzans/NokiaBTController/actions/runs/45292864740
 
 Workflow artifact: `NokiaBTController-JavaME-1.0.0` (JAR + JAD; artifact retention 30 days).
 
-JAR SHA-256: `e244da7a4e6000fc3da83ef0c6a20384d5838ec6ead52229b31f85de46c48e78`
+JAR SHA-256: `f1af895877f32d830991ba4c6690401ffd370f10f01b733455f40e26976166c4`
 
 ## Android receiver
 
