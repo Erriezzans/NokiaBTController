@@ -74,10 +74,10 @@ final class RemoteCanvas extends Canvas {
         g.fillRoundRect(7,top+23,49,19,8,8);g.fillRoundRect(61,top+23,49,19,8,8);
         g.fillRoundRect(w-110,top+23,49,19,8,8);g.fillRoundRect(w-56,top+23,49,19,8,8);
         g.setColor(245,248,255);g.setFont(Font.getFont(Font.FACE_SYSTEM,Font.STYLE_BOLD,Font.SIZE_SMALL));
-        g.drawString("L2 (*)",31,top+27,Graphics.TOP|Graphics.HCENTER);
-        g.drawString("L1 (7)",85,top+27,Graphics.TOP|Graphics.HCENTER);
-        g.drawString("R1 (9)",w-85,top+27,Graphics.TOP|Graphics.HCENTER);
-        g.drawString("R2 (#)",w-31,top+27,Graphics.TOP|Graphics.HCENTER);
+        g.drawString("L2 ("+app.gamepadKeyLabel(6)+")",31,top+27,Graphics.TOP|Graphics.HCENTER);
+        g.drawString("L1 ("+app.gamepadKeyLabel(4)+")",85,top+27,Graphics.TOP|Graphics.HCENTER);
+        g.drawString("R1 ("+app.gamepadKeyLabel(5)+")",w-85,top+27,Graphics.TOP|Graphics.HCENTER);
+        g.drawString("R2 ("+app.gamepadKeyLabel(7)+")",w-31,top+27,Graphics.TOP|Graphics.HCENTER);
         // D-pad.
         g.setColor(44,59,82);
         g.fillRoundRect(x-d/2,y-d/2,d,d,8,8);
@@ -105,10 +105,10 @@ final class RemoteCanvas extends Canvas {
         g.drawString("○",bx+d/2+2,by-9,Graphics.TOP|Graphics.HCENTER);
         g.drawString("×",bx+2,by+d/2+4,Graphics.TOP|Graphics.HCENTER);
         g.setFont(Font.getFont(Font.FACE_SYSTEM,Font.STYLE_PLAIN,Font.SIZE_SMALL));
-        g.drawString("L3 (6)",x,y+d*3/2+6,Graphics.TOP|Graphics.HCENTER);
-        g.drawString("R3 (8)",bx,by+d*3/2+6,Graphics.TOP|Graphics.HCENTER);
-        g.drawString("SELECT (5)",cx-26,h-foot-17,Graphics.TOP|Graphics.HCENTER);
-        g.drawString("START (0)",cx+26,h-foot-17,Graphics.TOP|Graphics.HCENTER);
+        g.drawString("L3 ("+app.gamepadKeyLabel(10)+")",x,y+d*3/2+6,Graphics.TOP|Graphics.HCENTER);
+        g.drawString("R3 ("+app.gamepadKeyLabel(11)+")",bx,by+d*3/2+6,Graphics.TOP|Graphics.HCENTER);
+        g.drawString("SELECT ("+app.gamepadKeyLabel(8)+")",cx-26,h-foot-17,Graphics.TOP|Graphics.HCENTER);
+        g.drawString("START ("+app.gamepadKeyLabel(9)+")",cx+26,h-foot-17,Graphics.TOP|Graphics.HCENTER);
     }
     protected void keyPressed(int keyCode){
         int a=getGameAction(keyCode);char c=keyChar(keyCode);
@@ -157,11 +157,7 @@ final class RemoteCanvas extends Canvas {
         app.send(NokiaBTController.PKT_PAD_AXIS,0,hx*32767);app.send(NokiaBTController.PKT_PAD_AXIS,1,hy*32767);
         int b=padButton(c);if(b<0&&a==FIRE)b=8;if(b>=0)app.send(NokiaBTController.PKT_PAD_BUTTON,b,pressed?1:0);
     }
-    private int padButton(char c){
-        if(c=='4')return 0;if(c=='3')return 1;if(c=='1')return 2;if(c=='2')return 3;
-        if(c=='7')return 4;if(c=='9')return 5;if(c=='*')return 6;if(c=='#')return 7;
-        if(c=='5')return 8;if(c=='0')return 9;if(c=='6')return 10;if(c=='8')return 11;return -1;
-    }
+    private int padButton(char c){return app.findGamepadButton(c);}
     private char keyChar(int keyCode){
         if(keyCode>='0'&&keyCode<='9')return(char)keyCode;
         String n=getKeyName(keyCode);return n!=null&&n.length()==1?n.charAt(0):'\0';
