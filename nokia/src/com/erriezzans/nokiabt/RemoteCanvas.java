@@ -4,307 +4,154 @@ import javax.microedition.lcdui.Canvas;
 import javax.microedition.lcdui.Font;
 import javax.microedition.lcdui.Graphics;
 
-/** 240x320 keypad-first interface. */
+/** Layout is calculated from the actual Canvas size to stay inside the C5-00 screen. */
 final class RemoteCanvas extends Canvas {
     private final NokiaBTController app;
-    private int mode = NokiaBTController.MODE_REMOTE;
-    private boolean mouseEnabled = false;
-    private String status = "Not connected";
-    private int hatX = 0;
-    private int hatY = 0;
-    private boolean holdUp;
-    private boolean holdDown;
-    private boolean holdLeft;
-    private boolean holdRight;
-
-    RemoteCanvas(NokiaBTController owner) {
-        app = owner;
-        setFullScreenMode(false);
+    private int mode=NokiaBTController.MODE_REMOTE;
+    private boolean mouseEnabled=false,up,down,left,right;
+    private String status="Not connected";
+    RemoteCanvas(NokiaBTController owner){app=owner;setFullScreenMode(false);}
+    void refresh(){repaint();}
+    void setConnectionStatus(String s){status=s;repaint();}
+    void setMode(int m){mode=m;releaseAll();app.send(NokiaBTController.PKT_MODE,m==0&&mouseEnabled?1:m,0);repaint();}
+    void toggleMouse(){mouseEnabled=!mouseEnabled;mode=NokiaBTController.MODE_REMOTE;releaseAll();
+        app.send(NokiaBTController.PKT_MODE,mouseEnabled?1:0,0);repaint();}
+    void openTextEntry(){app.setStatus("Use Options > Send text to type on Android.");}
+    private void releaseAll(){app.send(NokiaBTController.PKT_RESET,0,0);up=down=left=right=false;}
+    protected void paint(Graphics g){
+        final int w=getWidth(),h=getHeight(),header=36,footer=22;
+        g.setColor(13,18,28);g.fillRect(0,0,w,h);
+        g.setColor(30,42,62);g.fillRect(0,0,w,header);
+        g.setColor(255,255,255);g.setFont(Font.getFont(Font.FACE_SYSTEM,Font.STYLE_BOLD,Font.SIZE_SMALL));
+        g.drawString("NOKIA BT  "+(mode==2?"GAMEPAD":"TV REMOTE"),5,4,Graphics.TOP|Graphics.LEFT);
+        g.setFont(Font.getFont(Font.FACE_SYSTEM,Font.STYLE_PLAIN,Font.SIZE_SMALL));
+        g.setColor(175,194,218);g.drawString(status,5,20,Graphics.TOP|Graphics.LEFT);
+        if(mode==NokiaBTController.MODE_GAMEPAD)drawGamepad(g,w,h,header,footer);
+        else drawRemote(g,w,h,header,footer);
+        g.setColor(35,48,68);g.fillRect(0,h-footer,w,footer);
+        g.setColor(235,240,248);g.drawString("Menu",5,h-footer+4,Graphics.TOP|Graphics.LEFT);
+        g.drawString(mouseEnabled?"Mouse ON":"Mouse OFF",w-72,h-footer+4,Graphics.TOP|Graphics.LEFT);
     }
-
-    void refresh() { repaint(); }
-
-    void setConnectionStatus(String value) {
-        status = value;
-        repaint();
+    private void drawRemote(Graphics g,int w,int h,int top,int foot){
+        int usable=h-top-foot,cx=w/2,cy=top+usable/2-8;
+        int unit=Math.min(usable/3, w/3);
+        int b=Math.max(25,Math.min(42,unit));
+        g.setColor(255,255,255);g.setFont(Font.getFont(Font.FACE_SYSTEM,Font.STYLE_BOLD,Font.SIZE_MEDIUM));
+        g.drawString("TV REMOTE",cx,top+5,Graphics.TOP|Graphics.HCENTER);
+        g.setColor(mouseEnabled?35:76,mouseEnabled?160:100,mouseEnabled?100:125);
+        g.fillRoundRect(cx-43,top+25,86,19,9,9);
+        g.setColor(255,255,255);g.setFont(Font.getFont(Font.FACE_SYSTEM,Font.STYLE_BOLD,Font.SIZE_SMALL));
+        g.drawString(mouseEnabled?"MOUSE ENABLED":"MOUSE DISABLED",cx,top+29,Graphics.TOP|Graphics.HCENTER);
+        cy=Math.min(cy,top+usable/2+8);
+        g.setColor(44,59,82);
+        g.fillRoundRect(cx-b/2,cy-b/2,b,b,8,8);
+        g.fillRoundRect(cx-b/2,cy-b*3/2-3,b,b,8,8);
+        g.fillRoundRect(cx-b/2,cy+b/2+3,b,b,8,8);
+        g.fillRoundRect(cx-b*3/2-3,cy-b/2,b,b,8,8);
+        g.fillRoundRect(cx+b/2+3,cy-b/2,b,b,8,8);
+        g.setColor(245,248,255);
+        g.drawString("OK",cx,cy-6,Graphics.TOP|Graphics.HCENTER);
+        g.drawString("^",cx,cy-b*3/2+5,Graphics.TOP|Graphics.HCENTER);
+        g.drawString("v",cx,cy+b/2+8,Graphics.TOP|Graphics.HCENTER);
+        g.drawString("<",cx-b*3/2+8,cy-6,Graphics.TOP|Graphics.HCENTER);
+        g.drawString(">",cx+b/2+8,cy-6,Graphics.TOP|Graphics.HCENTER);
+        int y=Math.min(h-foot-13,cy+b*3/2+12);
+        g.setFont(Font.getFont(Font.FACE_SYSTEM,Font.STYLE_PLAIN,Font.SIZE_SMALL));
+        g.setColor(170,190,215);
+        g.drawString("1 Menu  2 Play/Pause  3 Mute",cx,y,Graphics.BOTTOM|Graphics.HCENTER);
+        g.drawString("4 Rewind  6 Forward  8 Stop",cx,y+14,Graphics.BOTTOM|Graphics.HCENTER);
+        g.drawString("7/9 Volume  # Back  0 Home",cx,y+28,Graphics.BOTTOM|Graphics.HCENTER);
+        g.drawString("* Mouse toggle  |  Send text in Menu",cx,y+42,Graphics.BOTTOM|Graphics.HCENTER);
     }
-
-    void setMode(int newMode) {
-        mode = newMode;
-        releaseAll();
-        int actualMode = (newMode == NokiaBTController.MODE_REMOTE && mouseEnabled)
-                ? NokiaBTController.MODE_MOUSE : newMode;
-        app.send(NokiaBTController.PKT_MODE, actualMode, 0);
-        repaint();
+    private void drawGamepad(Graphics g,int w,int h,int top,int foot){
+        int usable=h-top-foot,cx=w/2,cy=top+usable/2;
+        int d=Math.min(usable/3,w/3);
+        int x=w/4,y=cy;
+        g.setColor(255,255,255);g.setFont(Font.getFont(Font.FACE_SYSTEM,Font.STYLE_BOLD,Font.SIZE_MEDIUM));
+        g.drawString("PLAYSTATION GAMEPAD",cx,top+4,Graphics.TOP|Graphics.HCENTER);
+        g.setColor(44,59,82);
+        g.fillRoundRect(x-d/2,y-d/2,d,d,8,8);
+        g.fillRoundRect(x-d/3,y-d*3/2,d*2/3,d,8,8);
+        g.fillRoundRect(x-d/3,y+d/2,d*2/3,d,8,8);
+        g.fillRoundRect(x-d*3/2,y-d/3,d,d*2/3,8,8);
+        g.fillRoundRect(x+d/2,y-d/3,d,d*2/3,8,8);
+        g.setColor(245,248,255);
+        g.drawString("^",x,y-d*3/2+8,Graphics.TOP|Graphics.HCENTER);
+        g.drawString("v",x,y+d/2+8,Graphics.TOP|Graphics.HCENTER);
+        g.drawString("<",x-d*3/2+8,y-5,Graphics.TOP|Graphics.HCENTER);
+        g.drawString(">",x+d/2+8,y-5,Graphics.TOP|Graphics.HCENTER);
+        int bx=w*3/4,by=y;
+        g.setColor(44,59,82);
+        g.fillRoundRect(bx-12,by-d,28,28,14,14);
+        g.fillRoundRect(bx-d/2-12,by-14,28,28,14,14);
+        g.fillRoundRect(bx+d/2-12,by-14,28,28,14,14);
+        g.fillRoundRect(bx-12,by+d/2,28,28,14,14);
+        g.setColor(245,248,255);
+        g.drawString("△",bx+2,by-d+5,Graphics.TOP|Graphics.HCENTER);
+        g.drawString("□",bx-d/2+2,by-9,Graphics.TOP|Graphics.HCENTER);
+        g.drawString("○",bx+d/2+2,by-9,Graphics.TOP|Graphics.HCENTER);
+        g.drawString("×",bx+2,by+d/2+5,Graphics.TOP|Graphics.HCENTER);
+        g.setColor(170,190,215);g.setFont(Font.getFont(Font.FACE_SYSTEM,Font.STYLE_PLAIN,Font.SIZE_SMALL));
+        int base=h-foot-55;
+        g.drawString("1 □  2 △  3 ○  4 ×",cx,base,Graphics.BOTTOM|Graphics.HCENTER);
+        g.drawString("7 L1  9 R1  * L2  # R2",cx,base+14,Graphics.BOTTOM|Graphics.HCENTER);
+        g.drawString("6 L3  8 R3  5 Select  0 Start",cx,base+28,Graphics.BOTTOM|Graphics.HCENTER);
+        g.drawString("D-pad: D-pad + left stick",cx,base+42,Graphics.BOTTOM|Graphics.HCENTER);
     }
-
-    void toggleMouse() {
-        mouseEnabled = !mouseEnabled;
-        mode = NokiaBTController.MODE_REMOTE;
-        releaseAll();
-        app.send(NokiaBTController.PKT_MODE,
-                mouseEnabled ? NokiaBTController.MODE_MOUSE : NokiaBTController.MODE_REMOTE, 0);
-        repaint();
+    protected void keyPressed(int keyCode){
+        int a=getGameAction(keyCode);char c=keyChar(keyCode);
+        if(mode==NokiaBTController.MODE_GAMEPAD){gamepad(a,c,true);return;}
+        if(c=='*'){toggleMouse();return;}
+        if(c=='#'){key(NokiaBTController.KEY_BACK,true);return;}
+        if(c=='0'){key(NokiaBTController.KEY_HOME,true);return;}
+        if(c=='7'){key(NokiaBTController.KEY_VOLUMEDOWN,true);return;}
+        if(c=='9'){key(NokiaBTController.KEY_VOLUMEUP,true);return;}
+        if(c=='1'){key(NokiaBTController.KEY_MENU,true);return;}
+        if(c=='2'){key(NokiaBTController.KEY_PLAYPAUSE,true);return;}
+        if(c=='3'){key(NokiaBTController.KEY_MUTE,true);return;}
+        if(c=='4'){key(NokiaBTController.KEY_REWIND,true);return;}
+        if(c=='6'){key(NokiaBTController.KEY_FASTFORWARD,true);return;}
+        if(c=='8'){key(NokiaBTController.KEY_STOP,true);return;}
+        if(c=='5'||a==FIRE){if(mouseEnabled)mouseClick(1);else key(NokiaBTController.KEY_ENTER,true);return;}
+        direction(a,true);
     }
-
-    private void releaseAll() {
-        app.send(NokiaBTController.PKT_RESET, 0, 0);
-        hatX = 0;
-        hatY = 0;
-        holdUp = false; holdDown = false; holdLeft = false; holdRight = false;
+    protected void keyRepeated(int keyCode){int a=getGameAction(keyCode);if(mode!=2&&mouseEnabled)moveMouse(a);}
+    protected void keyReleased(int keyCode){
+        int a=getGameAction(keyCode);char c=keyChar(keyCode);
+        if(mode==2){gamepad(a,c,false);return;}
+        int k=remoteKey(c);if(k!=0)key(k,false);else if(c=='5'||a==FIRE){if(!mouseEnabled)key(NokiaBTController.KEY_ENTER,false);}
+        else if(!mouseEnabled)direction(a,false);
     }
-
-    protected void paint(Graphics g) {
-        int w = getWidth();
-        int h = getHeight();
-        g.setColor(13, 18, 28);
-        g.fillRect(0, 0, w, h);
-        g.setColor(30, 42, 62);
-        g.fillRect(0, 0, w, 42);
-        g.setColor(255, 255, 255);
-        g.setFont(Font.getFont(Font.FACE_SYSTEM, Font.STYLE_BOLD, Font.SIZE_MEDIUM));
-        g.drawString("NOKIA BT CONTROL", 10, 8, Graphics.TOP | Graphics.LEFT);
-        g.setFont(Font.getFont(Font.FACE_SYSTEM, Font.STYLE_PLAIN, Font.SIZE_SMALL));
-        g.setColor(170, 190, 215);
-        g.drawString(status, 10, 27, Graphics.TOP | Graphics.LEFT);
-
-        if (mode == NokiaBTController.MODE_GAMEPAD) {
-            drawGamepad(g, w, h);
-        } else {
-            drawRemote(g, w, h);
-        }
-
-        g.setColor(35, 48, 68);
-        g.fillRect(0, h - 27, w, 27);
-        g.setColor(225, 232, 242);
-        g.drawString("Options", 8, h - 23, Graphics.TOP | Graphics.LEFT);
-        g.drawString("* Mouse", w - 73, h - 23, Graphics.TOP | Graphics.LEFT);
+    private int remoteKey(char c){
+        if(c=='#')return NokiaBTController.KEY_BACK;if(c=='0')return NokiaBTController.KEY_HOME;
+        if(c=='7')return NokiaBTController.KEY_VOLUMEDOWN;if(c=='9')return NokiaBTController.KEY_VOLUMEUP;
+        if(c=='1')return NokiaBTController.KEY_MENU;if(c=='2')return NokiaBTController.KEY_PLAYPAUSE;
+        if(c=='3')return NokiaBTController.KEY_MUTE;if(c=='4')return NokiaBTController.KEY_REWIND;
+        if(c=='6')return NokiaBTController.KEY_FASTFORWARD;if(c=='8')return NokiaBTController.KEY_STOP;return 0;
     }
-
-    private void drawRemote(Graphics g, int w, int h) {
-        g.setColor(255, 255, 255);
-        g.setFont(Font.getFont(Font.FACE_SYSTEM, Font.STYLE_BOLD, Font.SIZE_LARGE));
-        g.drawString("TV REMOTE", w / 2, 52, Graphics.TOP | Graphics.HCENTER);
-        g.setColor(mouseEnabled ? 35 : 85, mouseEnabled ? 180 : 100, mouseEnabled ? 110 : 120);
-        g.fillRoundRect(55, 80, w - 110, 25, 12, 12);
-        g.setColor(255, 255, 255);
-        g.setFont(Font.getFont(Font.FACE_SYSTEM, Font.STYLE_BOLD, Font.SIZE_SMALL));
-        g.drawString(mouseEnabled ? "MOUSE: ON" : "MOUSE: OFF", w / 2, 86, Graphics.TOP | Graphics.HCENTER);
-
-        int cx = w / 2;
-        int cy = 175;
-        int d = 54;
-        g.setColor(44, 59, 82);
-        g.fillRoundRect(cx - d / 2, cy - d / 2, d, d, 12, 12);
-        g.fillRoundRect(cx - 23, cy - 69, 46, 43, 10, 10);
-        g.fillRoundRect(cx - 23, cy + 26, 46, 43, 10, 10);
-        g.fillRoundRect(cx - 69, cy - 23, 43, 46, 10, 10);
-        g.fillRoundRect(cx + 26, cy - 23, 43, 46, 10, 10);
-        g.setColor(235, 242, 250);
-        g.drawString("OK", cx, cy - 7, Graphics.TOP | Graphics.HCENTER);
-        g.drawString("▲", cx, cy - 63, Graphics.TOP | Graphics.HCENTER);
-        g.drawString("▼", cx, cy + 31, Graphics.TOP | Graphics.HCENTER);
-        g.drawString("◀", cx - 63, cy - 7, Graphics.TOP | Graphics.HCENTER);
-        g.drawString("▶", cx + 31, cy - 7, Graphics.TOP | Graphics.HCENTER);
-
-        g.setColor(160, 185, 215);
-        g.setFont(Font.getFont(Font.FACE_SYSTEM, Font.STYLE_PLAIN, Font.SIZE_SMALL));
-        g.drawString("D-PAD: Navigate / Move pointer", w / 2, 259, Graphics.TOP | Graphics.HCENTER);
-        g.drawString("Center: Select / Click", w / 2, 276, Graphics.TOP | Graphics.HCENTER);
-        g.drawString("#: Back     0: Home     7/9: Volume", w / 2, 293, Graphics.TOP | Graphics.HCENTER);
+    private void direction(int a,boolean pressed){
+        int k=a==UP?NokiaBTController.KEY_UP:a==DOWN?NokiaBTController.KEY_DOWN:
+            a==LEFT?NokiaBTController.KEY_LEFT:a==RIGHT?NokiaBTController.KEY_RIGHT:0;
+        if(k==0)return;if(mouseEnabled){if(pressed)moveMouse(a);}else key(k,pressed);
     }
-
-    private void drawGamepad(Graphics g, int w, int h) {
-        g.setColor(255, 255, 255);
-        g.setFont(Font.getFont(Font.FACE_SYSTEM, Font.STYLE_BOLD, Font.SIZE_LARGE));
-        g.drawString("GAME CONTROLLER", w / 2, 52, Graphics.TOP | Graphics.HCENTER);
-        g.setColor(140, 165, 195);
-        g.setFont(Font.getFont(Font.FACE_SYSTEM, Font.STYLE_PLAIN, Font.SIZE_SMALL));
-        g.drawString("Nokia D-pad = D-pad + left stick", w / 2, 78, Graphics.TOP | Graphics.HCENTER);
-
-        // Left-side digital pad illustration.
-        int x = 60;
-        int y = 177;
-        g.setColor(44, 59, 82);
-        g.fillRoundRect(x - 21, y - 21, 42, 42, 8, 8);
-        g.fillRoundRect(x - 16, y - 60, 32, 40, 8, 8);
-        g.fillRoundRect(x - 16, y + 20, 32, 40, 8, 8);
-        g.fillRoundRect(x - 60, y - 16, 40, 32, 8, 8);
-        g.fillRoundRect(x + 20, y - 16, 40, 32, 8, 8);
-        g.setColor(235, 242, 250);
-        g.drawString("▲", x, y - 56, Graphics.TOP | Graphics.HCENTER);
-        g.drawString("▼", x, y + 25, Graphics.TOP | Graphics.HCENTER);
-        g.drawString("◀", x - 55, y - 8, Graphics.TOP | Graphics.HCENTER);
-        g.drawString("▶", x + 25, y - 8, Graphics.TOP | Graphics.HCENTER);
-
-        // Face buttons: 1=Square, 2=Triangle, 3=Circle, 4=Cross.
-        int bx = 174;
-        int by = 177;
-        g.setColor(44, 59, 82);
-        g.fillRoundRect(bx - 15, by - 56, 34, 34, 16, 16);
-        g.fillRoundRect(bx - 52, by - 19, 34, 34, 16, 16);
-        g.fillRoundRect(bx + 22, by - 19, 34, 34, 16, 16);
-        g.fillRoundRect(bx - 15, by + 18, 34, 34, 16, 16);
-        g.setColor(235, 242, 250);
-        g.drawString("2", bx + 2, by - 49, Graphics.TOP | Graphics.HCENTER);
-        g.drawString("1", bx - 35, by - 12, Graphics.TOP | Graphics.HCENTER);
-        g.drawString("3", bx + 39, by - 12, Graphics.TOP | Graphics.HCENTER);
-        g.drawString("4", bx + 2, by + 25, Graphics.TOP | Graphics.HCENTER);
-        g.setColor(160, 185, 215);
-        g.drawString("1 □   2 △   3 ○   4 ×", w / 2, 255, Graphics.TOP | Graphics.HCENTER);
-        g.drawString("7/9: L1/R1    */#: L2/R2", w / 2, 273, Graphics.TOP | Graphics.HCENTER);
-        g.drawString("5: Select     0: Start", w / 2, 291, Graphics.TOP | Graphics.HCENTER);
+    private void moveMouse(int a){int dx=a==LEFT?-10:a==RIGHT?10:0,dy=a==UP?-10:a==DOWN?10:0;
+        if(dx!=0||dy!=0)app.send(NokiaBTController.PKT_MOUSE_MOVE,dx,dy);}
+    private void mouseClick(int b){app.send(NokiaBTController.PKT_MOUSE_BUTTON,b,1);app.send(NokiaBTController.PKT_MOUSE_BUTTON,b,0);}
+    private void key(int k,boolean down){app.send(NokiaBTController.PKT_KEY,k,down?1:0);}
+    private void gamepad(int a,char c,boolean pressed){
+        if(a==UP)up=pressed;else if(a==DOWN)down=pressed;else if(a==LEFT)left=pressed;else if(a==RIGHT)right=pressed;
+        int hx=(right?1:0)-(left?1:0),hy=(down?1:0)-(up?1:0);
+        app.send(NokiaBTController.PKT_PAD_HAT,0,hx);app.send(NokiaBTController.PKT_PAD_HAT,1,hy);
+        app.send(NokiaBTController.PKT_PAD_AXIS,0,hx*32767);app.send(NokiaBTController.PKT_PAD_AXIS,1,hy*32767);
+        int b=padButton(c);if(b<0&&a==FIRE)b=8;if(b>=0)app.send(NokiaBTController.PKT_PAD_BUTTON,b,pressed?1:0);
     }
-
-    protected void keyPressed(int keyCode) {
-        int action = getGameAction(keyCode);
-        char ch = keyChar(keyCode);
-
-        if (mode == NokiaBTController.MODE_GAMEPAD) {
-            handleGamepadPressed(action, ch);
-            return;
-        }
-
-        if (ch == '*') {
-            toggleMouse();
-            return;
-        }
-        if (ch == '#') {
-            sendKey(NokiaBTController.KEY_BACK, true);
-            return;
-        }
-        if (ch == '0') {
-            sendKey(NokiaBTController.KEY_HOME, true);
-            return;
-        }
-        if (ch == '7') {
-            sendKey(NokiaBTController.KEY_VOLUMEDOWN, true);
-            return;
-        }
-        if (ch == '9') {
-            sendKey(NokiaBTController.KEY_VOLUMEUP, true);
-            return;
-        }
-        if (ch == '5' || action == FIRE) {
-            if (mouseEnabled) clickMouse(1);
-            else sendKey(NokiaBTController.KEY_ENTER, true);
-            return;
-        }
-        handleDirection(action, true);
+    private int padButton(char c){
+        if(c=='4')return 0;if(c=='3')return 1;if(c=='1')return 2;if(c=='2')return 3;
+        if(c=='7')return 4;if(c=='9')return 5;if(c=='*')return 6;if(c=='#')return 7;
+        if(c=='5')return 8;if(c=='0')return 9;if(c=='6')return 10;if(c=='8')return 11;return -1;
     }
-
-    protected void keyRepeated(int keyCode) {
-        int action = getGameAction(keyCode);
-        char ch = keyChar(keyCode);
-        if (mode == NokiaBTController.MODE_GAMEPAD) return;
-        if (mouseEnabled && (action == UP || action == DOWN || action == LEFT || action == RIGHT)) {
-            moveMouse(action);
-        }
-    }
-
-    protected void keyReleased(int keyCode) {
-        int action = getGameAction(keyCode);
-        char ch = keyChar(keyCode);
-        if (mode == NokiaBTController.MODE_GAMEPAD) {
-            handleGamepadReleased(action, ch);
-            return;
-        }
-        if (ch == '#') sendKey(NokiaBTController.KEY_BACK, false);
-        else if (ch == '0') sendKey(NokiaBTController.KEY_HOME, false);
-        else if (ch == '7') sendKey(NokiaBTController.KEY_VOLUMEDOWN, false);
-        else if (ch == '9') sendKey(NokiaBTController.KEY_VOLUMEUP, false);
-        else if (ch == '5' || action == FIRE) {
-            if (!mouseEnabled) sendKey(NokiaBTController.KEY_ENTER, false);
-        } else if (!mouseEnabled) {
-            handleDirection(action, false);
-        }
-    }
-
-    private void handleDirection(int action, boolean down) {
-        int code = 0;
-        if (action == UP) code = NokiaBTController.KEY_UP;
-        else if (action == DOWN) code = NokiaBTController.KEY_DOWN;
-        else if (action == LEFT) code = NokiaBTController.KEY_LEFT;
-        else if (action == RIGHT) code = NokiaBTController.KEY_RIGHT;
-        if (code == 0) return;
-        if (mouseEnabled) {
-            if (down) moveMouse(action);
-        } else {
-            sendKey(code, down);
-        }
-    }
-
-    private void moveMouse(int action) {
-        int dx = 0;
-        int dy = 0;
-        if (action == LEFT) dx = -9;
-        else if (action == RIGHT) dx = 9;
-        else if (action == UP) dy = -9;
-        else if (action == DOWN) dy = 9;
-        app.send(NokiaBTController.PKT_MOUSE_MOVE, dx, dy);
-    }
-
-    private void clickMouse(int button) {
-        app.send(NokiaBTController.PKT_MOUSE_BUTTON, button, 1);
-        app.send(NokiaBTController.PKT_MOUSE_BUTTON, button, 0);
-    }
-
-    private void sendKey(int linuxKeyCode, boolean down) {
-        app.send(NokiaBTController.PKT_KEY, linuxKeyCode, down ? 1 : 0);
-    }
-
-    private void handleGamepadPressed(int action, char ch) {
-        if (action == UP) holdUp = true;
-        else if (action == DOWN) holdDown = true;
-        else if (action == LEFT) holdLeft = true;
-        else if (action == RIGHT) holdRight = true;
-        updateHat();
-
-        int button = gamepadButton(ch);
-        if (button < 0 && action == FIRE) button = 8; // Centre navigation key = Select.
-        if (button >= 0) app.send(NokiaBTController.PKT_PAD_BUTTON, button, 1);
-    }
-
-    private void handleGamepadReleased(int action, char ch) {
-        if (action == UP) holdUp = false;
-        else if (action == DOWN) holdDown = false;
-        else if (action == LEFT) holdLeft = false;
-        else if (action == RIGHT) holdRight = false;
-        updateHat();
-        int button = gamepadButton(ch);
-        if (button < 0 && action == FIRE) button = 8;
-        if (button >= 0) app.send(NokiaBTController.PKT_PAD_BUTTON, button, 0);
-    }
-
-    private void updateHat() {
-        int x = (holdRight ? 1 : 0) - (holdLeft ? 1 : 0);
-        int y = (holdDown ? 1 : 0) - (holdUp ? 1 : 0);
-        hatX = x;
-        hatY = y;
-        app.send(NokiaBTController.PKT_PAD_HAT, 0, x);
-        app.send(NokiaBTController.PKT_PAD_HAT, 1, y);
-        app.send(NokiaBTController.PKT_PAD_AXIS, 0, x * 32767);
-        app.send(NokiaBTController.PKT_PAD_AXIS, 1, y * 32767);
-    }
-
-    private char keyChar(int keyCode) {
-        if (keyCode >= '0' && keyCode <= '9') return (char) keyCode;
-        String name = getKeyName(keyCode);
-        if (name != null && name.length() == 1) return name.charAt(0);
-        return '\0';
-    }
-
-    private int gamepadButton(char ch) {
-        if (ch == '4') return 0; // Cross / South
-        if (ch == '3') return 1; // Circle / East
-        if (ch == '1') return 2; // Square / West
-        if (ch == '2') return 3; // Triangle / North
-        if (ch == '7') return 4; // L1
-        if (ch == '9') return 5; // R1
-        if (ch == '*') return 6; // L2
-        if (ch == '#') return 7; // R2
-        if (ch == '5') return 8; // Select
-        if (ch == '0') return 9; // Start
-        return -1;
+    private char keyChar(int keyCode){
+        if(keyCode>='0'&&keyCode<='9')return(char)keyCode;
+        String n=getKeyName(keyCode);return n!=null&&n.length()==1?n.charAt(0):'\0';
     }
 }
