@@ -22,12 +22,13 @@ Transport frame: 8 bytes, big-endian.
 | 1 | KEY | Linux `KEY_*` code | 1 down, 0 up |
 | 2 | MOUSE_MOVE | relative X delta | relative Y delta |
 | 3 | MOUSE_BUTTON | 1 left, 2 right, 3 middle | 1 down, 0 up |
-| 4 | PAD_BUTTON | button ID 0–9 | 1 down, 0 up |
+| 4 | PAD_BUTTON | button ID 0–11 | 1 down, 0 up |
 | 5 | PAD_HAT | 0 X / 1 Y | -1, 0, +1 |
 | 6 | PAD_AXIS | 0 ABS_X / 1 ABS_Y | -32767..32767 |
 | 7 | RESET | ignored | ignored; release all inputs |
 | 8 | MODE | 0 remote / 1 mouse / 2 gamepad | ignored |
+| 9 | TEXT | ASCII character code | ignored; inject as a keyboard keystroke |
 
-Gamepad button IDs: 0 Cross/South, 1 Circle/East, 2 Square/West, 3 Triangle/North, 4 L1, 5 R1, 6 L2, 7 R2, 8 Select, 9 Start.
+Gamepad button IDs: 0 Cross/South, 1 Circle/East, 2 Square/West, 3 Triangle/North, 4 L1, 5 R1, 6 L2, 7 R2, 8 Select, 9 Start, 10 L3, 11 R3.
 
-The Nokia has no analog sticks. Its D-pad generates digital full-deflection left-stick values plus D-pad hat events. L2/R2 are emitted as digital shoulder-trigger buttons and 0/255 trigger-axis values.
+The Nokia has no analog sticks. The D-pad supplies digital left-stick axes; keypad 6/8 add L3/R3 clicks. The Send text screen sends ASCII characters as keyboard events, so remote shortcuts are inactive while the text editor is open. Its D-pad generates digital full-deflection left-stick values plus D-pad hat events. L2/R2 are emitted as digital shoulder-trigger buttons and 0/255 trigger-axis values.
