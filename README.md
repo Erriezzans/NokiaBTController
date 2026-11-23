@@ -15,9 +15,11 @@ A two-part Bluetooth controller project for a **Nokia C5-00 (240×320, Java ME)*
 
 ## Build outputs
 
-The Nokia Java ME MIDlet is built by GitHub Actions using Eclipse ECJ, CLDC/MIDP/JSR-82 API libraries, and ProGuard CLDC preverification. The latest successful run produces `NokiaBTController-1.0.0.jar` and `NokiaBTController-1.0.0.jad` as the `NokiaBTController-JavaME-1.0.0` workflow artifact. Download both files together from the workflow run: https://github.com/Erriezzans/NokiaBTController/actions/runs/45196452711
+The Nokia Java ME MIDlet is built by GitHub Actions using Eclipse ECJ, CLDC/MIDP/JSR-82 API libraries, and ProGuard CLDC preverification. The latest successful run produces `NokiaBTController-1.0.0.jar` and `NokiaBTController-1.0.0.jad` as the `NokiaBTController-JavaME-1.0.0` workflow artifact. Download the JAR and JAD from the latest successful build: https://github.com/Erriezzans/NokiaBTController/actions/runs/45207317113
 
-The generated JAR contains the Bluetooth client, dedicated `DeviceBrowserCanvas`, responsive remote Canvas, persistent `KeyMap` and `KeyRemapForm` classes. It uses Java 1.1 class-file bytecode (major version 45), and its JAD descriptor has the matching JAR byte size. The current build is attached to GitHub Actions run https://github.com/Erriezzans/NokiaBTController/actions/runs/45203696264. It has not yet been installed or tested on a physical Nokia C5-00. The Android APK is not built by this Java ME workflow and still requires Android SDK 35, NDK and CMake 3.22.1.
+The generated JAR contains the Bluetooth client, dedicated `DeviceBrowserCanvas`, responsive remote Canvas, persistent `KeyMap` and `KeyRemapForm` classes. It uses Java 1.1 class-file bytecode (major version 45); the JAD size is checked against the final JAR by the build script. The release JAR is 27,706 bytes and includes the separate device browser. It has not yet been installed or tested on a physical Nokia C5-00.
+
+The Android companion APK is built separately by [the Android receiver workflow](https://github.com/Erriezzans/NokiaBTController/actions/runs/45206084311). That debug APK contains native helpers for arm64-v8a, armeabi-v7a and x86_64, and includes the Make discoverable (5 minutes) control.
 
 Bluetooth pairing, actual C5-00 JSR-82 behavior, Android kernel uinput availability, root authorization and SELinux policy still require device testing.
 
