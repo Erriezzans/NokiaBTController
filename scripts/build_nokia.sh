@@ -120,8 +120,60 @@ if ! jar tf "$JAR_OUT" | grep -q '^com/erriezzans/nokiabt/KeyRemapForm.class$'; 
   echo "Final JAR is missing KeyRemapForm.class." >&2
   exit 1
 fi
-if ! jar tf "$JAR_OUT" | grep -q '^com/erriezzans/nokiabt/KeyMap.class$'; then
+if ! jar tf "$JAR_OUT" | grep -q '^com/erriezzans/nokiabt/KeyMap.class
+JAR_SIZE="$(wc -c < "$JAR_OUT" | tr -d '[:space:]')"
+cat > "$JAD_OUT" <<EOF
+MIDlet-Name: Nokia BT Controller
+MIDlet-Version: 1.0.0
+MIDlet-Vendor: Erriezzans
+MIDlet-1: Nokia BT Controller,,com.erriezzans.nokiabt.NokiaBTController
+MIDlet-Description: Bluetooth TV remote, mouse and gamepad for Android
+MicroEdition-Configuration: CLDC-1.1
+MicroEdition-Profile: MIDP-2.0
+MIDlet-Permissions: javax.microedition.io.Connector.bluetooth.client
+MIDlet-Jar-URL: NokiaBTController-1.0.0.jar
+MIDlet-Jar-Size: $JAR_SIZE
+EOF
+
+echo
+echo "Build complete:"
+ls -lh "$JAR_OUT" "$JAD_OUT"
+echo "JAR SHA-256:"
+sha256sum "$JAR_OUT"
+echo "JAR contents:"
+jar tf "$JAR_OUT"
+echo "Manifest:"
+unzip -p "$JAR_OUT" META-INF/MANIFEST.MF
+; then
   echo "Final JAR is missing KeyMap.class." >&2
+  exit 1
+fi
+if ! jar tf "$JAR_OUT" | grep -q '^com/erriezzans/nokiabt/DeviceBrowserCanvas.class
+JAR_SIZE="$(wc -c < "$JAR_OUT" | tr -d '[:space:]')"
+cat > "$JAD_OUT" <<EOF
+MIDlet-Name: Nokia BT Controller
+MIDlet-Version: 1.0.0
+MIDlet-Vendor: Erriezzans
+MIDlet-1: Nokia BT Controller,,com.erriezzans.nokiabt.NokiaBTController
+MIDlet-Description: Bluetooth TV remote, mouse and gamepad for Android
+MicroEdition-Configuration: CLDC-1.1
+MicroEdition-Profile: MIDP-2.0
+MIDlet-Permissions: javax.microedition.io.Connector.bluetooth.client
+MIDlet-Jar-URL: NokiaBTController-1.0.0.jar
+MIDlet-Jar-Size: $JAR_SIZE
+EOF
+
+echo
+echo "Build complete:"
+ls -lh "$JAR_OUT" "$JAD_OUT"
+echo "JAR SHA-256:"
+sha256sum "$JAR_OUT"
+echo "JAR contents:"
+jar tf "$JAR_OUT"
+echo "Manifest:"
+unzip -p "$JAR_OUT" META-INF/MANIFEST.MF
+; then
+  echo "Final JAR is missing DeviceBrowserCanvas.class." >&2
   exit 1
 fi
 
