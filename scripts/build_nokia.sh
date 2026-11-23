@@ -7,14 +7,13 @@ LIB_DIR="$TOOLS_DIR/lib"
 PROGUARD_DIR="$TOOLS_DIR/proguard-7.8.2"
 BUILD_DIR="$ROOT_DIR/build/nokia"
 CLASSES_DIR="$BUILD_DIR/classes"
-PREVERIFIED_DIR="$BUILD_DIR/preverified"
 DIST_DIR="$ROOT_DIR/dist"
 
 ECJ_VERSION="3.38.0"
 API_VERSION="2.0.4"
 PROGUARD_VERSION="7.8.2"
 
-mkdir -p "$LIB_DIR" "$PROGUARD_DIR" "$CLASSES_DIR" "$PREVERIFIED_DIR" "$DIST_DIR"
+mkdir -p "$LIB_DIR" "$PROGUARD_DIR" "$CLASSES_DIR" "$DIST_DIR"
 
 download() {
   local url="$1"
@@ -43,8 +42,8 @@ fi
 PROGUARD="$PROGUARD_DIR/bin/proguard.sh"
 test -x "$PROGUARD"
 
-rm -rf "$CLASSES_DIR" "$PREVERIFIED_DIR"
-mkdir -p "$CLASSES_DIR" "$PREVERIFIED_DIR" "$DIST_DIR"
+rm -rf "$CLASSES_DIR"
+mkdir -p "$CLASSES_DIR" "$DIST_DIR"
 
 find "$ROOT_DIR/nokia/src" -name '*.java' -print | sort > "$BUILD_DIR/sources.txt"
 if [[ ! -s "$BUILD_DIR/sources.txt" ]]; then
@@ -60,13 +59,22 @@ java -jar "$ECJ_JAR" -nowarn \
   -classpath "$CLDC_JAR:$MIDP_JAR:$JSR82_JAR" \
   -d "$CLASSES_DIR" @"$BUILD_DIR/sources.txt"
 
+if ! find "$CLASSES_DIR" -type f -name '*.class' -print -quit | grep -q .; then
+  echo "ECJ completed but produced no .class files." >&2
+  echo "Source file list:" >&2
+  cat "$BUILD_DIR/sources.txt" >&2
+  exit 1
+fi
+
 echo "Creating intermediate class archive"
 jar cf "$BUILD_DIR/NokiaBTController-unverified.jar" -C "$CLASSES_DIR" .
 
+PREVERIFIED_JAR="$BUILD_DIR/NokiaBTController-preverified.jar"
 echo "CLDC preverification with ProGuard"
+rm -f "$PREVERIFIED_JAR"
 "$PROGUARD" \
   -injars "$BUILD_DIR/NokiaBTController-unverified.jar" \
-  -outjars "$BUILD_DIR/NokiaBTController-preverified.jar" \
+  -outjars "$PREVERIFIED_JAR" \
   -libraryjars "$CLDC_JAR" \
   -libraryjars "$MIDP_JAR" \
   -libraryjars "$JSR82_JAR" \
@@ -91,7 +99,20 @@ EOF
 JAR_OUT="$DIST_DIR/NokiaBTController-1.0.0.jar"
 JAD_OUT="$DIST_DIR/NokiaBTController-1.0.0.jad"
 rm -f "$JAR_OUT" "$JAD_OUT"
-jar cfm "$JAR_OUT" "$MANIFEST" -C "$PREVERIFIED_DIR" .
+
+if ! jar tf "$PREVERIFIED_JAR" | grep -q '^com/erriezzans/nokiabt/NokiaBTController.class$'; then
+  echo "Preverified archive is missing the MIDlet class; refusing to package an empty JAR." >&2
+  jar tf "$PREVERIFIED_JAR" >&2 || true
+  exit 1
+fi
+
+cp "$PREVERIFIED_JAR" "$JAR_OUT"
+jar ufm "$JAR_OUT" "$MANIFEST"
+
+if ! jar tf "$JAR_OUT" | grep -q '^com/erriezzans/nokiabt/NokiaBTController.class$'; then
+  echo "Final JAR is missing the MIDlet class." >&2
+  exit 1
+fi
 
 JAR_SIZE="$(wc -c < "$JAR_OUT" | tr -d '[:space:]')"
 cat > "$JAD_OUT" <<EOF
@@ -112,5 +133,7 @@ echo "Build complete:"
 ls -lh "$JAR_OUT" "$JAD_OUT"
 echo "JAR SHA-256:"
 sha256sum "$JAR_OUT"
+echo "JAR contents:"
+jar tf "$JAR_OUT"
 echo "Manifest:"
 unzip -p "$JAR_OUT" META-INF/MANIFEST.MF
